@@ -204,7 +204,22 @@ const ResultScreen: React.FC = () => {
           {/* 미리보기 버튼 */}
           <TouchableOpacity
             style={[styles.actionButton, styles.secondaryButton]}
-            onPress={() => navigation.navigate('Preview', { fileId, filename })}
+            onPress={() => {
+              // Claude API에서 받은 JSON 데이터 예시
+              const sampleData = [
+                { "Date": "2024-01-15", "Description": "스타벅스 강남점", "Amount": -4500, "Balance": "1,995,500" },
+                { "Date": "2024-01-16", "Description": "급여 입금", "Amount": 3000000, "Balance": "4,995,500" },
+                { "Date": "2024-01-17", "Description": "이마트 온라인몰", "Amount": -89000, "Balance": "4,906,500" },
+                { "Date": "2024-01-18", "Description": "ATM 출금", "Amount": -100000, "Balance": "4,806,500" },
+                { "Date": "2024-01-19", "Description": "카페베네 신촌점", "Amount": -3800, "Balance": "4,802,700" }
+              ];
+              
+              navigation.navigate('Preview', { 
+                fileId, 
+                filename, 
+                data: sampleData 
+              });
+            }}
           >
             <Ionicons name="eye" size={20} color={COLORS.secondary} />
             <Text style={[styles.actionButtonText, styles.secondaryButtonText]}>

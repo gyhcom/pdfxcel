@@ -13,7 +13,11 @@ import ResultScreen from './src/screens/ResultScreen';
 export type RootStackParamList = {
   Home: undefined;
   Upload: undefined;
-  Preview: { fileId: string; filename?: string };
+  Preview: { 
+    fileId: string; 
+    filename?: string;
+    data?: Array<Record<string, any>>; // Claude API JSON 데이터
+  };
   Result: { fileId: string; filename?: string };
 };
 
