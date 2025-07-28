@@ -8,6 +8,9 @@ from app.main import app
 # Railway에서 자동으로 PORT 환경변수를 제공
 PORT = int(os.environ.get("PORT", 8000))
 
+print(f"🚀 Starting server on 0.0.0.0:{PORT}")
+print(f"📊 Environment PORT: {os.environ.get('PORT', 'Not set')}")
+
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
