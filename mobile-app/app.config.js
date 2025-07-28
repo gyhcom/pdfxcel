@@ -8,9 +8,24 @@ export default {
     icon: "./assets/adaptive-icon.png",
     userInterfaceStyle: "light",
     assetBundlePatterns: ["**/*"],
+    packagerOpts: {
+      config: "metro.config.js"
+    },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: "com.pdfxcel.mobile"
+      bundleIdentifier: "com.pdfxcel.mobile",
+      infoPlist: {
+        NSAppTransportSecurity: {
+          NSAllowsArbitraryLoads: true,
+          NSExceptionDomains: {
+            "192.0.0.2": {
+              NSExceptionAllowsInsecureHTTPLoads: true,
+              NSExceptionMinimumTLSVersion: "TLSv1.0",
+              NSIncludesSubdomains: true
+            }
+          }
+        }
+      }
     },
     android: {
       adaptiveIcon: {
@@ -24,7 +39,8 @@ export default {
         "MANAGE_DOCUMENTS"
       ],
       compileSdkVersion: 34,
-      targetSdkVersion: 34
+      targetSdkVersion: 34,
+      usesCleartextTraffic: true
     },
     web: {
       favicon: "./assets/favicon.png"
