@@ -4,7 +4,11 @@ import httpx
 import asyncio
 from typing import Dict, Any, List
 import logging
+from dotenv import load_dotenv
 from app.models.schemas import ProcessingResult, TableData
+
+# .env 파일 로드
+load_dotenv()
 
 # 로깅 설정
 logger = logging.getLogger(__name__)
@@ -17,12 +21,20 @@ class ClaudeIntegration:
     def __init__(self):
         self.api_key = os.getenv("CLAUDE_API_KEY")
         if not self.api_key:
-            logger.warning("CLAUDE_API_KEY not found in environment variables")
+            logger.error("CLAUDE_API_KEY not found in environment variables")
+            raise ValueError("Claude API key is required. Please set CLAUDE_API_KEY in .env file")
+        
+        # API 키 형식 검증
+        if not self.api_key.startswith('sk-ant-'):
+            logger.error("Invalid Claude API key format")
+            raise ValueError("Invalid Claude API key format. Key should start with 'sk-ant-'")
         
         self.api_url = "https://api.anthropic.com/v1/messages"
         self.model = "claude-3-haiku-20240307"
         self.max_retries = 3
         self.retry_delay = 1.0
+        
+        logger.info("Claude integration initialized successfully")
     
     async def process_bank_statement(self, text_content: str) -> ProcessingResult:
         """
@@ -115,19 +127,42 @@ class ClaudeIntegration:
                     )
                     
                     if response.status_code == 200:
-                        response_data = response.json()
-                        content = response_data["content"][0]["text"]
-                        
-                        # JSON 응답 파싱
-                        parsed_data = self._parse_claude_response(content)
-                        return parsed_data
+                        try:
+                            response_data = response.json()
+                            
+                            # Claude API 응답 구조 검증
+                            if "content" not in response_data or not response_data["content"]:
+                                raise ValueError("Invalid response structure: missing content")
+                            
+                            content = response_data["content"][0]["text"]
+                            logger.info(f"Claude API 응답 수신 성공 (길이: {len(content)} 문자)")
+                            
+                            # JSON 응답 파싱
+                            parsed_data = self._parse_claude_response(content)
+                            return parsed_data
+                            
+                        except (KeyError, IndexError, json.JSONDecodeError) as e:
+                            raise ValueError(f"Invalid API response format: {str(e)}")
+                    
+                    elif response.status_code == 401:
+                        raise Exception("Invalid API key. Please check your CLAUDE_API_KEY")
                     
                     elif response.status_code == 429:  # Rate limit
                         if attempt < self.max_retries - 1:
-                            await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                            retry_after = response.headers.get("retry-after", self.retry_delay * (2 ** attempt))
+                            logger.warning(f"Rate limit hit, retrying after {retry_after} seconds")
+                            await asyncio.sleep(float(retry_after))
                             continue
                         else:
                             raise Exception("Rate limit exceeded after retries")
+                    
+                    elif response.status_code >= 500:
+                        if attempt < self.max_retries - 1:
+                            logger.warning(f"Server error {response.status_code}, retrying...")
+                            await asyncio.sleep(self.retry_delay * (2 ** attempt))
+                            continue
+                        else:
+                            raise Exception(f"Server error: {response.status_code} - {response.text}")
                     
                     else:
                         error_msg = f"API call failed with status {response.status_code}: {response.text}"
