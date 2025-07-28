@@ -18,7 +18,7 @@ import Toast from 'react-native-toast-message';
 import { RootStackParamList } from '../../App';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/config';
 import { FileUtils, FilePickerResult } from '../utils/fileUtils';
-import { apiService } from '../services/apiService';
+import { apiService, ApiError } from '../services/apiService';
 import { ProcessingStatus, UploadProgress } from '../types';
 import { userPlanService } from '../services/userPlanService';
 import ProgressBar from '../components/ProgressBar';
@@ -38,18 +38,32 @@ const UploadScreen: React.FC = () => {
     try {
       const file = await FileUtils.pickPdfFile();
       if (file) {
+        // 파일 크기 체크
+        if (file.size > 10 * 1024 * 1024) { // 10MB
+          Toast.show({
+            type: 'error',
+            text1: '파일 크기 초과',
+            text2: '최대 10MB까지 업로드 가능합니다.',
+            visibilityTime: 4000,
+          });
+          return;
+        }
+        
         setSelectedFile(file);
         Toast.show({
           type: 'success',
           text1: '파일 선택 완료',
-          text2: file.name,
+          text2: `${file.name} (${FileUtils.formatFileSize(file.size)})`,
+          visibilityTime: 2000,
         });
       }
     } catch (error) {
+      console.error('File selection error:', error);
       Toast.show({
         type: 'error',
         text1: '파일 선택 실패',
-        text2: '다시 시도해주세요.',
+        text2: 'PDF 파일만 선택 가능합니다.',
+        visibilityTime: 3000,
       });
     }
   };
@@ -130,8 +144,9 @@ const UploadScreen: React.FC = () => {
           
           Toast.show({
             type: 'success',
-            text1: '변환 완료!',
-            text2: `${useAI ? 'AI' : '기본'} 모드로 처리되었습니다.`,
+            text1: '🎉 변환 완료!',
+            text2: `${useAI ? 'AI 지능형 분석' : '기본 추출'}로 처리되었습니다.`,
+            visibilityTime: 3000,
           });
 
           navigation.navigate('Preview', {
@@ -155,15 +170,46 @@ const UploadScreen: React.FC = () => {
 
     } catch (error) {
       console.error('Upload error:', error);
+      
+      let errorMessage = '알 수 없는 오류가 발생했습니다.';
+      let toastMessage = '다시 시도해주세요.';
+      
+      // ApiError 처리
+      if (error && typeof error === 'object' && 'code' in error) {
+        const apiError = error as ApiError;
+        errorMessage = apiError.message;
+        
+        // 코드별 맞춤형 안내 메시지
+        switch (apiError.code) {
+          case 'NETWORK_ERROR':
+            toastMessage = 'Wi-Fi 또는 모바일 데이터 연결을 확인해주세요.';
+            break;
+          case 'FILE_TOO_LARGE':
+            toastMessage = '더 작은 파일로 다시 시도해주세요.';
+            break;
+          case 'TIMEOUT_ERROR':
+            toastMessage = '인터넷 연결이 느릴 수 있습니다. 잠시 후 다시 시도해주세요.';
+            break;
+          case 'RATE_LIMIT':
+            toastMessage = '5분 후에 다시 시도해주세요.';
+            break;
+          default:
+            toastMessage = '다시 시도해주세요.';
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       setProcessingStatus({
         status: 'error',
-        error: error instanceof Error ? error.message : '알 수 없는 오류',
+        error: errorMessage,
       });
       
       Toast.show({
         type: 'error',
         text1: '업로드 실패',
-        text2: error instanceof Error ? error.message : '다시 시도해주세요.',
+        text2: toastMessage,
+        visibilityTime: 4000,
       });
     }
   };
@@ -293,14 +339,30 @@ const UploadScreen: React.FC = () => {
         {/* 에러 표시 */}
         {hasError && (
           <View style={styles.errorSection}>
-            <Ionicons name="alert-circle" size={24} color={COLORS.error} />
+            <Ionicons name="alert-circle" size={32} color={COLORS.error} />
+            <Text style={styles.errorTitle}>오류가 발생했습니다</Text>
             <Text style={styles.errorText}>{processingStatus.error}</Text>
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={() => setProcessingStatus({ status: 'idle' })}
-            >
-              <Text style={styles.retryButtonText}>다시 시도</Text>
-            </TouchableOpacity>
+            
+            <View style={styles.errorActions}>
+              <TouchableOpacity
+                style={styles.retryButton}
+                onPress={() => {
+                  setProcessingStatus({ status: 'idle' });
+                  // 파일 선택 초기화는 하지 않음
+                }}
+              >
+                <Ionicons name="refresh" size={16} color="white" />
+                <Text style={styles.retryButtonText}>다시 시도</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.resetButton}
+                onPress={resetUpload}
+              >
+                <Ionicons name="home" size={16} color={COLORS.textSecondary} />
+                <Text style={styles.resetButtonText}>처음부터</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -457,27 +519,64 @@ const styles = StyleSheet.create({
   },
   errorSection: {
     alignItems: 'center',
-    padding: SPACING.lg,
+    padding: SPACING.xl,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     marginTop: SPACING.md,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: COLORS.error,
+    shadowColor: COLORS.error,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.error,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.sm,
   },
   errorText: {
     fontSize: 14,
-    color: COLORS.error,
+    color: COLORS.textSecondary,
     textAlign: 'center',
-    marginVertical: SPACING.md,
+    marginBottom: SPACING.lg,
+    lineHeight: 20,
+  },
+  errorActions: {
+    flexDirection: 'row',
+    gap: SPACING.md,
   },
   retryButton: {
     backgroundColor: COLORS.error,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
   },
   retryButtonText: {
     color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  resetButton: {
+    backgroundColor: COLORS.border,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  resetButtonText: {
+    color: COLORS.textSecondary,
     fontSize: 14,
     fontWeight: '600',
   },

@@ -2,6 +2,13 @@ import * as FileSystem from 'expo-file-system';
 import { API_CONFIG } from '../constants/config';
 import { UploadResponse, UploadProgress, TablePreviewData } from '../types';
 
+// 에러 타입 정의
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: any;
+}
+
 export class ApiService {
   private baseUrl: string;
   private timeout: number;
@@ -11,6 +18,98 @@ export class ApiService {
     this.timeout = API_CONFIG.timeout;
   }
 
+  // 네트워크 연결 상태 확인
+  private async checkNetworkConnection(): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(`${this.baseUrl.replace('/api', '')}/health`, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: { 'Accept': 'application/json' },
+      });
+      
+      clearTimeout(timeoutId);
+      return response.ok;
+    } catch (error) {
+      console.warn('네트워크 연결 확인 실패:', error);
+      return false;
+    }
+  }
+
+  // 에러 분류 및 사용자 친화적 메시지 생성
+  private createApiError(error: any, context: string): ApiError {
+    console.error(`API Error in ${context}:`, error);
+    
+    // 네트워크 에러
+    if (error.name === 'AbortError' || error.code === 'NETWORK_ERR') {
+      return {
+        code: 'NETWORK_ERROR',
+        message: '인터넷 연결을 확인해주세요.',
+        details: error
+      };
+    }
+    
+    // 타임아웃 에러
+    if (error.name === 'TimeoutError' || error.message?.includes('timeout')) {
+      return {
+        code: 'TIMEOUT_ERROR',
+        message: '요청 시간이 초과되었습니다. 다시 시도해주세요.',
+        details: error
+      };
+    }
+    
+    // HTTP 상태 코드별 처리
+    if (error.status) {
+      switch (error.status) {
+        case 400:
+          return {
+            code: 'BAD_REQUEST',
+            message: '잘못된 요청입니다. 파일 형식을 확인해주세요.',
+            details: error
+          };
+        case 401:
+          return {
+            code: 'UNAUTHORIZED',
+            message: '인증이 필요합니다.',
+            details: error
+          };
+        case 413:
+          return {
+            code: 'FILE_TOO_LARGE',
+            message: '파일 크기가 너무 큽니다. (최대 10MB)',
+            details: error
+          };
+        case 429:
+          return {
+            code: 'RATE_LIMIT',
+            message: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+            details: error
+          };
+        case 500:
+          return {
+            code: 'SERVER_ERROR',
+            message: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+            details: error
+          };
+        default:
+          return {
+            code: 'HTTP_ERROR',
+            message: `서버 오류 (${error.status}): 관리자에게 문의해주세요.`,
+            details: error
+          };
+      }
+    }
+    
+    // 기본 에러
+    return {
+      code: 'UNKNOWN_ERROR',
+      message: error.message || '알 수 없는 오류가 발생했습니다.',
+      details: error
+    };
+  }
+
   async uploadPdf(
     fileUri: string,
     fileName: string,
@@ -18,21 +117,28 @@ export class ApiService {
     onProgress?: (progress: UploadProgress) => void
   ): Promise<UploadResponse> {
     try {
-      console.log('🚀 API 요청 시작:', this.baseUrl);
+      console.log('🚀 PDF 업로드 시작:', {
+        fileName,
+        useAi,
+        apiUrl: this.baseUrl
+      });
       
-      // 먼저 헬스체크로 연결 테스트
-      try {
-        const healthResponse = await fetch(`${this.baseUrl.replace('/api', '')}/health`, {
-          method: 'GET',
-          headers: {
-            'Accept': 'application/json',
-          },
-        });
-        console.log('💊 헬스체크 응답:', healthResponse.status);
-        const healthData = await healthResponse.json();
-        console.log('💊 헬스체크 데이터:', healthData);
-      } catch (healthError) {
-        console.error('⚠️ 헬스체크 실패:', healthError);
+      // 네트워크 연결 확인
+      const isConnected = await this.checkNetworkConnection();
+      if (!isConnected) {
+        throw this.createApiError(
+          { code: 'NETWORK_ERROR' },
+          'uploadPdf - network check'
+        );
+      }
+
+      // 파일 크기 확인
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (fileInfo.exists && fileInfo.size && fileInfo.size > 10 * 1024 * 1024) { // 10MB
+        throw this.createApiError(
+          { status: 413 },
+          'uploadPdf - file size check'
+        );
       }
       
       // 업로드 요청
@@ -53,60 +159,126 @@ export class ApiService {
         }
       );
       
+      console.log('📤 업로드 응답:', {
+        status: result.status,
+        bodyLength: result.body?.length
+      });
+      
       if (result.status !== 200) {
-        throw new Error(`Upload failed with status: ${result.status}`);
+        const errorData = result.body ? JSON.parse(result.body) : {};
+        throw this.createApiError(
+          { status: result.status, ...errorData },
+          'uploadPdf - upload request'
+        );
       }
 
       const response: UploadResponse = JSON.parse(result.body);
+      
+      // 응답 데이터 검증
+      if (!response.file_id) {
+        throw this.createApiError(
+          { message: '서버 응답이 올바르지 않습니다.' },
+          'uploadPdf - response validation'
+        );
+      }
+      
+      console.log('✅ 업로드 성공:', response.file_id);
       return response;
 
     } catch (error) {
-      console.error('Upload error:', error);
-      throw new Error(
-        error instanceof Error 
-          ? error.message 
-          : '파일 업로드 중 오류가 발생했습니다.'
-      );
+      if (error.code) {
+        // 이미 ApiError로 처리된 경우
+        throw error;
+      }
+      
+      const apiError = this.createApiError(error, 'uploadPdf');
+      throw apiError;
     }
   }
 
   async downloadExcel(fileId: string): Promise<string> {
     try {
+      console.log('📥 Excel 다운로드 시작:', fileId);
+      
+      // 네트워크 연결 확인
+      const isConnected = await this.checkNetworkConnection();
+      if (!isConnected) {
+        throw this.createApiError(
+          { code: 'NETWORK_ERROR' },
+          'downloadExcel - network check'
+        );
+      }
+      
       const downloadUrl = `${this.baseUrl}/download/${fileId}`;
-      const filename = `bank_statement_${fileId}.xlsx`;
+      const filename = `PDFxcel_${fileId}_${new Date().getTime()}.xlsx`;
       const localUri = `${FileSystem.documentDirectory}${filename}`;
 
+      console.log('📥 다운로드 URL:', downloadUrl);
+      
       // 파일 다운로드
       const downloadResult = await FileSystem.downloadAsync(
         downloadUrl,
         localUri
       );
 
+      console.log('📥 다운로드 응답:', {
+        status: downloadResult.status,
+        uri: downloadResult.uri
+      });
+      
       if (downloadResult.status !== 200) {
-        throw new Error(`Download failed with status: ${downloadResult.status}`);
+        throw this.createApiError(
+          { status: downloadResult.status },
+          'downloadExcel - download request'
+        );
       }
 
+      // 다운로드된 파일 확인
+      const fileInfo = await FileSystem.getInfoAsync(downloadResult.uri);
+      if (!fileInfo.exists || (fileInfo.size && fileInfo.size < 100)) {
+        throw this.createApiError(
+          { message: '다운로드된 파일이 손상되었습니다.' },
+          'downloadExcel - file validation'
+        );
+      }
+      
+      console.log('✅ 다운로드 성공:', downloadResult.uri);
       return downloadResult.uri;
 
     } catch (error) {
-      console.error('Download error:', error);
-      throw new Error(
-        error instanceof Error 
-          ? error.message 
-          : '파일 다운로드 중 오류가 발생했습니다.'
-      );
+      if (error.code) {
+        throw error;
+      }
+      
+      const apiError = this.createApiError(error, 'downloadExcel');
+      throw apiError;
     }
   }
 
   async deleteFile(fileId: string): Promise<void> {
     try {
+      console.log('🗑️ 파일 삭제 시작:', fileId);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+      
       const response = await fetch(`${this.baseUrl}/download/${fileId}`, {
         method: 'DELETE',
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        },
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`Delete failed with status: ${response.status}`);
+        console.warn('파일 삭제 실패:', response.status);
+        // 삭제 실패는 치명적이지 않으므로 에러를 던지지 않음
+        return;
       }
+      
+      console.log('✅ 파일 삭제 성공:', fileId);
 
     } catch (error) {
       console.error('Delete error:', error);

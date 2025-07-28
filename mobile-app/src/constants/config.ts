@@ -2,8 +2,8 @@ import { ApiConfig } from '../types';
 
 export const API_CONFIG: ApiConfig = {
   baseUrl: __DEV__ 
-    ? 'http://localhost:8000/api'  // 개발 환경 - 로컬 서버
-    : 'https://pdfxcel.railway.app/api',  // 프로덕션 환경 - Railway가 동작하면 사용
+    ? 'https://pdfxcel-production.up.railway.app/api'  // 개발 환경 - Railway 프로덕션 서버
+    : 'https://pdfxcel-production.up.railway.app/api',  // 프로덕션 환경 - Railway 서버
   timeout: 30000, // 30초
 };
 

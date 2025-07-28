@@ -16,7 +16,7 @@ import Toast from 'react-native-toast-message';
 
 import { RootStackParamList } from '../../App';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/config';
-import { apiService } from '../services/apiService';
+import { apiService, ApiError } from '../services/apiService';
 import { FileUtils } from '../utils/fileUtils';
 
 type ResultScreenRouteProp = RouteProp<RootStackParamList, 'Result'>;
@@ -65,7 +65,30 @@ const ResultScreen: React.FC = () => {
     } catch (error) {
       console.error('Download error:', error);
       
-      const errorMessage = error instanceof Error ? error.message : '다운로드 실패';
+      let errorMessage = '다운로드 실패';
+      let toastMessage = '다시 시도해주세요.';
+      
+      // ApiError 처리
+      if (error && typeof error === 'object' && 'code' in error) {
+        const apiError = error as ApiError;
+        errorMessage = apiError.message;
+        
+        switch (apiError.code) {
+          case 'NETWORK_ERROR':
+            toastMessage = '인터넷 연결을 확인하고 다시 시도해주세요.';
+            break;
+          case 'TIMEOUT_ERROR':
+            toastMessage = '인터넷이 느릴 수 있습니다. 잠시 후 다시 시도해주세요.';
+            break;
+          case 'SERVER_ERROR':
+            toastMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+            break;
+          default:
+            toastMessage = '다시 시도해주세요.';
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
       
       setDownloadState({
         isDownloading: false,
@@ -75,7 +98,8 @@ const ResultScreen: React.FC = () => {
       Toast.show({
         type: 'error',
         text1: '다운로드 실패',
-        text2: errorMessage,
+        text2: toastMessage,
+        visibilityTime: 4000,
       });
     }
   };
@@ -90,10 +114,12 @@ const ResultScreen: React.FC = () => {
       const excelFilename = `${filename?.replace('.pdf', '') || 'bank_statement'}_converted.xlsx`;
       await FileUtils.shareFile(downloadState.downloadedUri, excelFilename);
     } catch (error) {
+      console.error('Share error:', error);
       Toast.show({
         type: 'error',
         text1: '공유 실패',
         text2: '파일 공유 중 오류가 발생했습니다.',
+        visibilityTime: 3000,
       });
     }
   };
