@@ -213,6 +213,15 @@ const HomeScreen: React.FC = () => {
           <Text style={styles.infoText}>
             🔒 안전한 처리: 업로드된 파일은 24시간 후 자동 삭제
           </Text>
+          
+          {/* 개인정보 처리방침 링크 */}
+          <TouchableOpacity 
+            style={styles.privacyLink}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          >
+            <Ionicons name="shield-checkmark" size={16} color={COLORS.primary} />
+            <Text style={styles.privacyLinkText}>개인정보 처리방침</Text>
+          </TouchableOpacity>
         </View>
 
       </ScrollView>
@@ -349,6 +358,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.textSecondary,
     marginLeft: SPACING.xs,
+  },
+  privacyLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.lg,
+    paddingVertical: SPACING.sm,
+  },
+  privacyLinkText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    marginLeft: SPACING.xs,
+    textDecorationLine: 'underline',
   },
 });
 

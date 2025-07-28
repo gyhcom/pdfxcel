@@ -9,6 +9,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import UploadScreen from './src/screens/UploadScreen';
 import PreviewScreen from './src/screens/PreviewScreen';
 import ResultScreen from './src/screens/ResultScreen';
+import PrivacyPolicyScreen from './src/screens/PrivacyPolicyScreen';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -19,6 +20,7 @@ export type RootStackParamList = {
     data?: Array<Record<string, any>>; // Claude API JSON 데이터
   };
   Result: { fileId: string; filename?: string };
+  PrivacyPolicy: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -59,6 +61,11 @@ export default function App() {
             name="Result" 
             component={ResultScreen}
             options={{ title: '변환 완료' }}
+          />
+          <Stack.Screen 
+            name="PrivacyPolicy" 
+            component={PrivacyPolicyScreen}
+            options={{ title: '개인정보 처리방침', headerShown: false }}
           />
         </Stack.Navigator>
         <StatusBar style="light" />
