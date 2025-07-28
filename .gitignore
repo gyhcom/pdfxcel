@@ -79,3 +79,9 @@ CLAUDE_API_KEY
 *.key
 *.pem
 secrets/
+# 개발 테스트 파일들
+simple_server.py
+test_server.py
+server.log
+.python-version
+run.sh
