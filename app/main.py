@@ -11,7 +11,9 @@ setup_logging(level="INFO")
 app = FastAPI(
     title="PDF to Excel Converter",
     description="API for converting PDF bank statements to Excel files",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",  # 명시적으로 활성화
+    redoc_url="/redoc"  # 명시적으로 활성화
 )
 
 app.add_middleware(
@@ -32,6 +34,19 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+@app.get("/api")
+async def api_info():
+    return {
+        "message": "PDFxcel API Server",
+        "version": "1.0.0",
+        "endpoints": {
+            "upload": "/api/upload",
+            "download": "/api/download/{file_id}",
+            "docs": "/docs",
+            "redoc": "/redoc"
+        }
+    }
 
 
 @app.on_event("startup")
