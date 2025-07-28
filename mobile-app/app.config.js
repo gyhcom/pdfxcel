@@ -5,8 +5,13 @@ export default {
     version: "1.0.0",
     owner: "konise", // 👈 추가 완료
     orientation: "portrait",
-    icon: "./assets/adaptive-icon.png",
+    icon: "./assets/icon.png",
     userInterfaceStyle: "light",
+    splash: {
+      image: "./assets/splash.png",
+      resizeMode: "contain",
+      backgroundColor: "#ffffff"
+    },
     assetBundlePatterns: ["**/*"],
     packagerOpts: {
       config: "metro.config.js"
