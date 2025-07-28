@@ -45,6 +45,7 @@ logs
 
 # iOS
 ios/
+!ios/Podfile.lock
 
 # Android
 android/
