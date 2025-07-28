@@ -19,17 +19,21 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.pdfxcel.mobile",
+      buildNumber: "1",
       infoPlist: {
         NSAppTransportSecurity: {
           NSAllowsArbitraryLoads: true,
           NSExceptionDomains: {
-            "192.0.0.2": {
-              NSExceptionAllowsInsecureHTTPLoads: true,
-              NSExceptionMinimumTLSVersion: "TLSv1.0",
+            "pdfxcel-production.up.railway.app": {
+              NSExceptionAllowsInsecureHTTPLoads: false,
+              NSExceptionMinimumTLSVersion: "TLSv1.2",
               NSIncludesSubdomains: true
             }
           }
-        }
+        },
+        NSDocumentsFolderUsageDescription: "이 앱은 변환된 Excel 파일을 저장하기 위해 문서 폴더에 접근합니다.",
+        NSPhotoLibraryUsageDescription: "PDF 파일을 선택하기 위해 사진 라이브러리에 접근합니다.",
+        ITSAppUsesNonExemptEncryption: false
       }
     },
     android: {
