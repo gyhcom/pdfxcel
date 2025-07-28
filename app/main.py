@@ -1,9 +1,17 @@
 import asyncio
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import upload, download
 from app.utils.logging_config import setup_logging
-from app.services.cleanup import cleanup_temp_files, ensure_cleanup_directories
+
+# 안전한 import - Railway 환경에서 실패할 수 있는 모듈들
+try:
+    from app.routers import upload, download
+    from app.services.cleanup import cleanup_temp_files, ensure_cleanup_directories
+    ROUTERS_AVAILABLE = True
+    print("✅ 모든 라우터 import 성공")
+except Exception as e:
+    print(f"⚠️ 라우터 import 실패: {e}")
+    ROUTERS_AVAILABLE = False
 
 # 로깅 설정
 setup_logging(level="INFO")
@@ -24,8 +32,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(upload.router, prefix="/api", tags=["upload"])
-app.include_router(download.router, prefix="/api", tags=["download"])
+# 라우터 등록 - import가 성공한 경우만
+if ROUTERS_AVAILABLE:
+    app.include_router(upload.router, prefix="/api", tags=["upload"])
+    app.include_router(download.router, prefix="/api", tags=["download"])
+    print("✅ 라우터 등록 완료")
+else:
+    print("⚠️ 라우터를 사용할 수 없음")
 
 @app.get("/")
 async def root():
@@ -52,8 +65,17 @@ async def api_info():
 @app.on_event("startup")
 async def startup_event():
     """애플리케이션 시작 시 실행되는 이벤트"""
-    # 정리 대상 디렉토리 생성
-    ensure_cleanup_directories()
+    print("🚀 FastAPI 애플리케이션 시작")
     
-    # 백그라운드 정리 작업 시작
-    asyncio.create_task(cleanup_temp_files())
+    if ROUTERS_AVAILABLE:
+        try:
+            # 정리 대상 디렉토리 생성
+            ensure_cleanup_directories()
+            
+            # 백그라운드 정리 작업 시작
+            asyncio.create_task(cleanup_temp_files())
+            print("✅ 백그라운드 서비스 시작 완료")
+        except Exception as e:
+            print(f"⚠️ 백그라운드 서비스 시작 실패: {e}")
+    else:
+        print("⚠️ 백그라운드 서비스를 사용할 수 없음")
