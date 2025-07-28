@@ -3,17 +3,11 @@ export default {
     name: "PDFXcel",
     slug: "pdfxcel",
     version: "1.0.0",
+    owner: "konise", // 👈 추가 완료
     orientation: "portrait",
-    icon: "./assets/icon.png",
+    icon: "./assets/adaptive-icon.png",
     userInterfaceStyle: "light",
-    splash: {
-      image: "./assets/splash.png",
-      resizeMode: "contain",
-      backgroundColor: "#ffffff"
-    },
-    assetBundlePatterns: [
-      "**/*"
-    ],
+    assetBundlePatterns: ["**/*"],
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.pdfxcel.mobile"
@@ -28,7 +22,9 @@ export default {
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "MANAGE_DOCUMENTS"
-      ]
+      ],
+      compileSdkVersion: 34,
+      targetSdkVersion: 34
     },
     web: {
       favicon: "./assets/favicon.png"
@@ -51,7 +47,7 @@ export default {
     ],
     extra: {
       eas: {
-        projectId: "your-project-id-here"
+        projectId: "9fd64511-f848-4736-9468-e6f43d6497fe"
       }
     }
   }
