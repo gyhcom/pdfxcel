@@ -2,7 +2,7 @@ import { ApiConfig } from '../types';
 
 export const API_CONFIG: ApiConfig = {
   baseUrl: __DEV__ 
-    ? 'http://localhost:8000/api'  // 개발 환경
+    ? 'https://fastest-residents-same-cia.trycloudflare.com/api'  // 개발 환경 - Cloudflare 터널
     : 'https://your-production-domain.com/api',  // 프로덕션 환경
   timeout: 30000, // 30초
 };

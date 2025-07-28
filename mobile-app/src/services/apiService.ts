@@ -18,6 +18,23 @@ export class ApiService {
     onProgress?: (progress: UploadProgress) => void
   ): Promise<UploadResponse> {
     try {
+      console.log('🚀 API 요청 시작:', this.baseUrl);
+      
+      // 먼저 헬스체크로 연결 테스트
+      try {
+        const healthResponse = await fetch(`${this.baseUrl.replace('/api', '')}/health`, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          },
+        });
+        console.log('💊 헬스체크 응답:', healthResponse.status);
+        const healthData = await healthResponse.json();
+        console.log('💊 헬스체크 데이터:', healthData);
+      } catch (healthError) {
+        console.error('⚠️ 헬스체크 실패:', healthError);
+      }
+      
       // 업로드 요청
       const result = await FileSystem.uploadAsync(
         `${this.baseUrl}/upload`,
@@ -31,6 +48,7 @@ export class ApiService {
           },
           headers: {
             'Content-Type': 'multipart/form-data',
+            'Accept': 'application/json',
           },
         }
       );
