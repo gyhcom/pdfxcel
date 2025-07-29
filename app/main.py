@@ -5,7 +5,7 @@ from app.utils.logging_config import setup_logging
 
 # 안전한 import - Railway 환경에서 실패할 수 있는 모듈들
 try:
-    from app.routers import upload, download
+    from app.routers import upload, download, websocket, history
     from app.services.cleanup import cleanup_temp_files, ensure_cleanup_directories
     ROUTERS_AVAILABLE = True
     print("✅ 모든 라우터 import 성공")
@@ -36,6 +36,8 @@ app.add_middleware(
 if ROUTERS_AVAILABLE:
     app.include_router(upload.router, prefix="/api", tags=["upload"])
     app.include_router(download.router, prefix="/api", tags=["download"])
+    app.include_router(websocket.router, prefix="/api", tags=["websocket"])
+    app.include_router(history.router, prefix="/api", tags=["history"])
     print("✅ 라우터 등록 완료")
 else:
     print("⚠️ 라우터를 사용할 수 없음")

@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import { API_CONFIG } from '../constants/config';
 import { UploadResponse, UploadProgress, TablePreviewData } from '../types';
+import { historyService } from './historyService';
 
 // 에러 타입 정의
 export interface ApiError {
@@ -141,6 +142,9 @@ export class ApiService {
         );
       }
       
+      // 세션 ID 가져오기
+      const sessionId = await historyService.getSessionId();
+
       // 업로드 요청
       const result = await FileSystem.uploadAsync(
         `${this.baseUrl}/upload`,
@@ -155,6 +159,7 @@ export class ApiService {
           headers: {
             'Content-Type': 'multipart/form-data',
             'Accept': 'application/json',
+            'X-Session-ID': sessionId,
           },
         }
       );
@@ -324,6 +329,53 @@ export class ApiService {
           ? error.message 
           : '미리보기 데이터를 가져오는 중 오류가 발생했습니다.'
       );
+    }
+  }
+
+  async getConvertedData(fileId: string): Promise<any[]> {
+    try {
+      console.log('📊 변환된 데이터 조회 시작:', fileId);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+      
+      const response = await fetch(`${this.baseUrl}/data/${fileId}`, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (!response.ok) {
+        throw this.createApiError(
+          { status: response.status },
+          'getConvertedData - API request'
+        );
+      }
+      
+      const data = await response.json();
+      
+      // 데이터 검증
+      if (!Array.isArray(data)) {
+        throw this.createApiError(
+          { message: '올바르지 않은 데이터 형식입니다.' },
+          'getConvertedData - data validation'
+        );
+      }
+      
+      console.log('✅ 변환된 데이터 조회 성공:', data.length, '개의 레코드');
+      return data;
+      
+    } catch (error) {
+      if (error.code) {
+        throw error;
+      }
+      
+      const apiError = this.createApiError(error, 'getConvertedData');
+      throw apiError;
     }
   }
 

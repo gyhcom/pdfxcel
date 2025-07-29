@@ -1,70 +1,124 @@
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Header
 from fastapi.responses import JSONResponse
 import base64
 import uuid
+import os
 from typing import Optional
+import logging
+
 from app.models.schemas import UploadResponse, ProcessingType
-from app.services.pdf_processor import PDFProcessor
-from app.services.excel_generator import ExcelGenerator
+from app.services.enhanced_conversion_service import enhanced_conversion_service
+from app.services.task_manager import task_manager
+from app.services.websocket_manager import manager as ws_manager
+from app.services.history_service import history_service
 from app.utils.file_manager import FileManager
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/upload", response_model=UploadResponse)
 async def upload_pdf(
     file: Optional[UploadFile] = File(None),
     file_data: Optional[str] = Form(None),
-    use_ai: bool = Form(False)
+    use_ai: bool = Form(False),
+    session_id: Optional[str] = Header(None, alias="X-Session-ID")
 ):
+    """
+    PDF 파일 업로드 및 백그라운드 변환 시작
+    WebSocket을 통한 실시간 진행률 업데이트 지원
+    """
+    file_id = str(uuid.uuid4())
+    
     try:
-        file_id = str(uuid.uuid4())
+        logger.info(f"📤 Upload request received - file_id: {file_id}, use_ai: {use_ai}")
         
-        # Handle file input (multipart or base64)
+        # 1. 파일 입력 처리 (multipart 또는 base64)
+        original_filename = "document.pdf"
+        
         if file:
             if not file.filename.lower().endswith('.pdf'):
-                raise HTTPException(status_code=400, detail="Only PDF files are allowed")
+                raise HTTPException(status_code=400, detail="PDF 파일만 업로드 가능합니다")
             
-            # Save uploaded file temporarily
+            original_filename = file.filename
             file_content = await file.read()
+            
+            # 파일 크기 검증
+            if len(file_content) > 10 * 1024 * 1024:  # 10MB
+                raise HTTPException(status_code=413, detail="파일 크기가 너무 큽니다 (최대 10MB)")
+            
             temp_pdf_path = await FileManager.save_temp_file(file_content, file_id, "pdf")
             
         elif file_data:
             try:
-                # Decode base64 data
                 file_content = base64.b64decode(file_data)
+                if len(file_content) > 10 * 1024 * 1024:  # 10MB
+                    raise HTTPException(status_code=413, detail="파일 크기가 너무 큽니다 (최대 10MB)")
+                
                 temp_pdf_path = await FileManager.save_temp_file(file_content, file_id, "pdf")
             except Exception as e:
-                raise HTTPException(status_code=400, detail="Invalid base64 data")
+                raise HTTPException(status_code=400, detail="잘못된 base64 데이터입니다")
         else:
-            raise HTTPException(status_code=400, detail="No file provided")
+            raise HTTPException(status_code=400, detail="파일이 제공되지 않았습니다")
         
-        # Process PDF based on AI preference
-        processor = PDFProcessor()
+        # 히스토리에 파일 추가 (세션 ID가 있는 경우)
+        if session_id:
+            await history_service.add_file_to_history(
+                session_id=session_id,
+                file_id=file_id,
+                original_filename=original_filename,
+                processing_type="ai" if use_ai else "basic",
+                status="processing"
+            )
         
-        if use_ai:
-            processing_result = await processor.process_with_ai(temp_pdf_path)
-            processing_type = ProcessingType.AI
-        else:
-            processing_result = await processor.process_basic(temp_pdf_path)
-            processing_type = ProcessingType.BASIC
+        # 2. 백그라운드에서 변환 작업 시작
+        conversion_task = enhanced_conversion_service.convert_pdf_to_excel(
+            file_id=file_id,
+            file_path=temp_pdf_path,
+            original_filename=original_filename,
+            use_ai=use_ai,
+            session_id=session_id
+        )
         
-        if not processing_result.success:
-            raise HTTPException(status_code=500, detail=f"Processing failed: {processing_result.error}")
+        # 3. 태스크 매니저에 작업 등록
+        task_manager.start_task(
+            file_id=file_id,
+            coro=conversion_task,
+            task_name=f"pdf_to_excel_{original_filename}"
+        )
         
-        # Generate Excel file
-        excel_generator = ExcelGenerator()
-        excel_path = await excel_generator.create_excel(processing_result.data, file_id)
+        # 4. 즉시 응답 반환 (변환은 백그라운드에서 진행)
+        processing_type = ProcessingType.AI if use_ai else ProcessingType.BASIC
         
-        # Store file info for download
-        await FileManager.register_file(file_id, excel_path)
+        logger.info(f"✅ Upload processed - file_id: {file_id}, background conversion started")
         
         return UploadResponse(
             file_id=file_id,
-            message="File processed successfully",
+            message="파일 업로드 완료. 변환이 백그라운드에서 진행됩니다.",
             processing_type=processing_type
         )
         
     except HTTPException:
+        # 실패 시 WebSocket으로 알림
+        await ws_manager.broadcast_status(
+            file_id=file_id,
+            status="failed",
+            progress=0,
+            message="업로드 실패"
+        )
         raise
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        logger.error(f"Upload error for file_id {file_id}: {str(e)}")
+        
+        # 실패 시 WebSocket으로 알림
+        await ws_manager.broadcast_status(
+            file_id=file_id,
+            status="failed",
+            progress=0,
+            message=f"업로드 실패: {str(e)}"
+        )
+        
+        raise HTTPException(
+            status_code=500, 
+            detail=f"서버 오류가 발생했습니다: {str(e)}"
+        )

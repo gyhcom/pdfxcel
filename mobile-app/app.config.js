@@ -19,7 +19,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: "com.pdfxcel.mobile",
-      buildNumber: "1",
+      buildNumber: "2",
       deploymentTarget: "15.1",
       infoPlist: {
         NSAppTransportSecurity: {

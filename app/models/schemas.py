@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from enum import Enum
+from datetime import datetime
 
 class ProcessingType(str, Enum):
     BASIC = "basic"
@@ -28,3 +29,20 @@ class ProcessingResult(BaseModel):
     success: bool
     data: Optional[TableData] = None
     error: Optional[str] = None
+
+# 히스토리 관련 모델들
+class FileHistoryItem(BaseModel):
+    file_id: str
+    original_filename: str
+    converted_filename: str
+    upload_time: datetime
+    status: str  # "completed", "processing", "failed", "cancelled"
+    file_size: Optional[int] = None
+    processing_type: str = "basic"  # "ai" or "basic"
+    excel_path: Optional[str] = None
+
+class HistoryResponse(BaseModel):
+    success: bool
+    files: List[FileHistoryItem]
+    total_count: int
+    session_stats: Optional[Dict[str, Any]] = None

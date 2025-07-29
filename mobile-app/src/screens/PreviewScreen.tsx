@@ -51,7 +51,13 @@ const PreviewScreen: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 500));
 
       if (!data || !Array.isArray(data) || data.length === 0) {
-        throw new Error('유효한 데이터가 없습니다.');
+        console.log('미리보기 데이터가 없음, 빈 데이터로 처리');
+        setTableData({
+          headers: ['데이터 없음'],
+          rows: [['변환된 데이터가 없습니다.']]
+        });
+        setLoading(false);
+        return;
       }
 
       // JSON 배열에서 테이블 데이터 추출
