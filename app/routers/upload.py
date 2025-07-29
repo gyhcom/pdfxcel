@@ -16,6 +16,36 @@ from app.utils.file_manager import FileManager
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+@router.get("/test-conversion")
+async def test_conversion():
+    """변환 서비스 테스트용 엔드포인트"""
+    try:
+        from app.services.enhanced_conversion_service import enhanced_conversion_service
+        logger.info("🧪 Testing conversion service import...")
+        
+        # 간단한 테스트 실행
+        test_result = "Conversion service imported successfully"
+        
+        # Task manager 테스트
+        from app.services.task_manager import task_manager
+        logger.info("🧪 Testing task manager...")
+        
+        return {
+            "status": "success",
+            "message": "Services imported successfully",
+            "test_result": test_result,
+            "task_manager_status": "imported"
+        }
+    except Exception as e:
+        import traceback
+        logger.error(f"🧪 Service test failed: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @router.post("/upload", response_model=UploadResponse)
 async def upload_pdf(
     file: Optional[UploadFile] = File(None),
