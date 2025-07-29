@@ -219,6 +219,18 @@ const UploadScreen: React.FC = () => {
     setProcessingStatus({ status: 'idle' });
   };
 
+  const formatFileName = (filename: string) => {
+    // UUID 패턴 확인 (8-4-4-4-12 형태)
+    const uuidPattern = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\.pdf$/i;
+    
+    if (uuidPattern.test(filename)) {
+      return 'PDF 문서';
+    }
+    
+    // 파일 확장자 제거하고 보기 좋게 표시
+    return filename.replace(/\.[^/.]+$/, '');
+  };
+
   const isProcessing = ['uploading', 'processing'].includes(processingStatus.status);
   const isCompleted = processingStatus.status === 'completed';
   const hasError = processingStatus.status === 'error';
@@ -248,7 +260,9 @@ const UploadScreen: React.FC = () => {
               <View style={styles.fileInfo}>
                 <Ionicons name="document-text" size={24} color={COLORS.primary} />
                 <View style={styles.fileDetails}>
-                  <Text style={styles.fileName}>{selectedFile.name}</Text>
+                  <Text style={styles.fileName}>
+                    {formatFileName(selectedFile.name)}
+                  </Text>
                   <Text style={styles.fileSize}>
                     {FileUtils.formatFileSize(selectedFile.size)}
                   </Text>

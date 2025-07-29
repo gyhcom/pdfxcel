@@ -197,6 +197,18 @@ const HistoryScreen: React.FC = () => {
     }
   };
 
+  const formatFileName = (filename: string) => {
+    // UUID 패턴 확인 (8-4-4-4-12 형태)
+    const uuidPattern = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}\.pdf$/i;
+    
+    if (uuidPattern.test(filename)) {
+      return 'PDF 문서';
+    }
+    
+    // 파일 확장자 제거하고 보기 좋게 표시
+    return filename.replace(/\.[^/.]+$/, '');
+  };
+
   const renderFileItem = (file: FileHistoryItem, index: number) => (
     <View key={file.file_id} style={styles.fileItem}>
       <View style={styles.fileHeader}>
@@ -208,7 +220,7 @@ const HistoryScreen: React.FC = () => {
           />
           <View style={styles.fileDetails}>
             <Text style={styles.fileName} numberOfLines={1}>
-              {file.original_filename}
+              {formatFileName(file.original_filename)}
             </Text>
             <Text style={styles.fileSubtitle}>
               {historyService.formatRelativeTime(file.upload_time)} • {' '}
