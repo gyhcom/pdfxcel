@@ -194,7 +194,11 @@ class EnhancedConversionService:
             raise
             
         except Exception as e:
+            import traceback
+            error_trace = traceback.format_exc()
             logger.error(f"❌ Conversion failed for file_id {file_id}: {str(e)}")
+            logger.error(f"❌ Full traceback: {error_trace}")
+            
             await ws_manager.broadcast_status(
                 file_id=file_id,
                 status="failed",

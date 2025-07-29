@@ -198,6 +198,10 @@ async def upload_pdf(
             )
             logger.info(f"🔄 Task registered in task_manager for file_id: {file_id}, task: {task}")
             
+            # 작업이 실제로 시작되었는지 확인
+            if not task:
+                raise Exception("Failed to start background conversion task")
+            
         except Exception as task_error:
             logger.error(f"❌ Failed to start conversion task for file_id {file_id}: {task_error}")
             import traceback
@@ -211,7 +215,19 @@ async def upload_pdf(
                     status="failed"
                 )
             
-            # 에러 상황에서도 사용자에게는 성공 응답을 주지만 로그에 기록
+            # WebSocket으로 실패 알림
+            await ws_manager.broadcast_status(
+                file_id=file_id,
+                status="failed",
+                progress=0,
+                message=f"변환 작업 시작 실패: {str(task_error)}"
+            )
+            
+            # 실제 에러가 발생했으므로 에러 응답 반환
+            raise HTTPException(
+                status_code=500,
+                detail=f"변환 작업을 시작할 수 없습니다: {str(task_error)}"
+            )
         
         # 4. 즉시 응답 반환 (변환은 백그라운드에서 진행)
         processing_type = ProcessingType.AI if use_ai else ProcessingType.BASIC

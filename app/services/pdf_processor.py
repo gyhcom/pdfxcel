@@ -84,6 +84,12 @@ class PDFProcessor:
                 error=f"AI processing failed: {str(e)}"
             )
     
+    async def extract_text(self, pdf_path: str) -> str:
+        """
+        Extract all text content from PDF (public async method)
+        """
+        return self._extract_text(pdf_path)
+    
     def _extract_text(self, pdf_path: str) -> str:
         """
         Extract all text content from PDF

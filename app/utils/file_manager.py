@@ -154,6 +154,41 @@ class FileManager:
             return 0
     
     @classmethod
+    async def cleanup_file(cls, file_id: str) -> bool:
+        """
+        Clean up temporary files for a specific file_id
+        This includes PDF and any related temporary files
+        
+        Args:
+            file_id: Unique identifier for the file
+            
+        Returns:
+            True if cleanup was successful, False otherwise
+        """
+        try:
+            success = True
+            
+            # Common extensions to clean up
+            extensions = ['pdf', 'xlsx', 'tmp']
+            
+            for ext in extensions:
+                file_path = await cls.get_temp_file_path(file_id, ext)
+                if os.path.exists(file_path):
+                    try:
+                        os.remove(file_path)
+                    except Exception:
+                        success = False
+            
+            # Also try to delete from registry
+            if file_id in cls._file_registry:
+                await cls.delete_file(file_id)
+            
+            return success
+            
+        except Exception:
+            return False
+    
+    @classmethod
     async def get_registry_stats(cls) -> Dict:
         """
         Get statistics about the file registry
