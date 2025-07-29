@@ -246,11 +246,13 @@ class EnhancedConversionService:
         await asyncio.sleep(0.5)
         
         try:
-            result = await self.pdf_processor.extract_text(file_path)
-            if not result.success:
-                raise ValueError(f"PDF 텍스트 추출 실패: {result.error}")
+            # extract_text는 단순히 문자열을 반환
+            extracted_text = await self.pdf_processor.extract_text(file_path)
             
-            return result.content
+            if not extracted_text or not extracted_text.strip():
+                raise ValueError("PDF에서 추출된 텍스트가 없습니다.")
+            
+            return extracted_text
             
         except Exception as e:
             raise ValueError(f"PDF 처리 중 오류 발생: {str(e)}")
