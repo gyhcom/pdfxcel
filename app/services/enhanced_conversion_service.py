@@ -155,14 +155,18 @@ class EnhancedConversionService:
                 }
             )
             
-            # 히스토리 업데이트
+            # 히스토리 업데이트 (변환된 데이터 포함)
             if session_id:
+                # 변환된 데이터를 미리보기용으로 포맷팅
+                preview_data = self._format_data_for_preview(structured_data)
+                
                 await history_service.update_file_status(
                     session_id=session_id,
                     file_id=file_id,
                     status="completed",
                     excel_path=excel_path,
-                    file_size=file_size
+                    file_size=file_size,
+                    converted_data=preview_data
                 )
             
             logger.info(f"✅ Conversion completed for file_id: {file_id}")
@@ -294,20 +298,20 @@ class EnhancedConversionService:
         await asyncio.sleep(0.3)
         
         try:
-            # 출력 파일명 생성
-            base_name = original_filename.replace('.pdf', '').replace('.PDF', '')
-            excel_filename = f"{base_name}_converted_{file_id}.xlsx"
-            
-            # Excel 생성
-            result = await self.excel_generator.create_excel(
-                data=data,
-                filename=excel_filename
+            # 데이터를 TableData 형식으로 변환
+            from app.models.schemas import TableData
+            table_data = TableData(
+                headers=data.get("headers", []),
+                rows=data.get("rows", [])
             )
             
-            if not result.success:
-                raise ValueError(f"Excel 파일 생성 실패: {result.error}")
+            # Excel 생성
+            excel_path = await self.excel_generator.create_excel(table_data, file_id)
             
-            return result.file_path
+            # 파일 매니저에 등록
+            await self.file_manager.register_file(file_id, excel_path)
+            
+            return excel_path
             
         except Exception as e:
             raise ValueError(f"Excel 생성 중 오류 발생: {str(e)}")
@@ -318,6 +322,26 @@ class EnhancedConversionService:
             return os.path.getsize(file_path) if os.path.exists(file_path) else 0
         except:
             return 0
+    
+    def _format_data_for_preview(self, structured_data: Dict[str, Any]) -> List[Dict]:
+        """변환된 데이터를 미리보기용으로 포맷팅"""
+        try:
+            headers = structured_data.get("headers", [])
+            rows = structured_data.get("rows", [])
+            
+            preview_data = []
+            for row in rows:
+                if len(row) >= len(headers):
+                    row_dict = {}
+                    for i, header in enumerate(headers):
+                        row_dict[header] = row[i] if i < len(row) else ""
+                    preview_data.append(row_dict)
+            
+            return preview_data
+            
+        except Exception as e:
+            logger.error(f"Error formatting data for preview: {e}")
+            return []
     
     async def _cleanup_temp_files(self, file_id: str):
         """임시 파일 정리"""

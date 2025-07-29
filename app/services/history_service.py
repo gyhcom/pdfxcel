@@ -21,6 +21,7 @@ class FileHistoryItem(BaseModel):
     file_size: Optional[int] = None
     processing_type: str = "basic"  # "ai" or "basic"
     excel_path: Optional[str] = None
+    converted_data: Optional[List[Dict]] = None  # 변환된 데이터 저장
 
 class UserSession(BaseModel):
     session_id: str
@@ -132,7 +133,8 @@ class HistoryService:
         file_id: str,
         status: str,
         excel_path: Optional[str] = None,
-        file_size: Optional[int] = None
+        file_size: Optional[int] = None,
+        converted_data: Optional[List[Dict]] = None
     ) -> bool:
         """파일 상태 업데이트"""
         try:
@@ -148,6 +150,8 @@ class HistoryService:
                         file_item.excel_path = excel_path
                     if file_size:
                         file_item.file_size = file_size
+                    if converted_data:
+                        file_item.converted_data = converted_data
                     
                     logger.info(f"📝 Updated file status: {file_id} -> {status}")
                     return True

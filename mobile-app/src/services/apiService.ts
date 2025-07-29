@@ -214,16 +214,24 @@ export class ApiService {
         );
       }
       
+      // 세션 ID 가져오기
+      const sessionId = await historyService.getSessionId();
+      
       const downloadUrl = `${this.baseUrl}/download/${fileId}`;
       const filename = `PDFxcel_${fileId}_${new Date().getTime()}.xlsx`;
       const localUri = `${FileSystem.documentDirectory}${filename}`;
 
       console.log('📥 다운로드 URL:', downloadUrl);
       
-      // 파일 다운로드
+      // 파일 다운로드 (헤더에 세션 ID 포함)
       const downloadResult = await FileSystem.downloadAsync(
         downloadUrl,
-        localUri
+        localUri,
+        {
+          headers: {
+            'X-Session-ID': sessionId,
+          }
+        }
       );
 
       console.log('📥 다운로드 응답:', {
@@ -336,6 +344,9 @@ export class ApiService {
     try {
       console.log('📊 변환된 데이터 조회 시작:', fileId);
       
+      // 세션 ID 가져오기
+      const sessionId = await historyService.getSessionId();
+      
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);
       
@@ -344,6 +355,7 @@ export class ApiService {
         signal: controller.signal,
         headers: {
           'Accept': 'application/json',
+          'X-Session-ID': sessionId,
         },
       });
       
