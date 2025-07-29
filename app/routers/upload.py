@@ -128,6 +128,7 @@ async def upload_pdf(
     file: Optional[UploadFile] = File(None),
     file_data: Optional[str] = Form(None),
     use_ai: bool = Form(False),
+    original_filename: Optional[str] = Form(None),
     session_id: Optional[str] = Header(None, alias="X-Session-ID")
 ):
     """
@@ -140,13 +141,19 @@ async def upload_pdf(
         logger.info(f"📤 Upload request received - file_id: {file_id}, use_ai: {use_ai}")
         
         # 1. 파일 입력 처리 (multipart 또는 base64)
-        original_filename = "document.pdf"
+        # 파라미터로 전달된 파일명을 우선 사용, 없으면 기본값
+        if original_filename:
+            logger.info(f"📝 Original filename from parameter: {original_filename}")
+        elif file and file.filename:
+            original_filename = file.filename
+            logger.info(f"📝 Original filename from file: {original_filename}")
+        else:
+            original_filename = "document.pdf"
+            logger.info(f"📝 Using default filename: {original_filename}")
         
         if file:
-            if not file.filename.lower().endswith('.pdf'):
+            if not original_filename.lower().endswith('.pdf'):
                 raise HTTPException(status_code=400, detail="PDF 파일만 업로드 가능합니다")
-            
-            original_filename = file.filename
             file_content = await file.read()
             
             # 파일 크기 검증

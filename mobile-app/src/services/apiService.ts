@@ -155,6 +155,7 @@ export class ApiService {
           uploadType: FileSystem.FileSystemUploadType.MULTIPART,
           parameters: {
             use_ai: useAi.toString(),
+            original_filename: fileName,
           },
           headers: {
             'Content-Type': 'multipart/form-data',
