@@ -10,7 +10,9 @@ try:
     ROUTERS_AVAILABLE = True
     print("✅ 모든 라우터 import 성공")
 except Exception as e:
+    import traceback
     print(f"⚠️ 라우터 import 실패: {e}")
+    print(f"상세 에러: {traceback.format_exc()}")
     ROUTERS_AVAILABLE = False
 
 # 로깅 설정
