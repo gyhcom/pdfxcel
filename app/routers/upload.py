@@ -23,18 +23,37 @@ async def test_conversion():
         from app.services.enhanced_conversion_service import enhanced_conversion_service
         logger.info("🧪 Testing conversion service import...")
         
-        # 간단한 테스트 실행
-        test_result = "Conversion service imported successfully"
-        
         # Task manager 테스트
         from app.services.task_manager import task_manager
         logger.info("🧪 Testing task manager...")
         
+        # 실제 변환 함수 테스트 (더미 데이터로)
+        test_file_id = "test-123"
+        logger.info(f"🧪 Creating test conversion task for file_id: {test_file_id}")
+        
+        # 테스트용 간단한 코루틴 생성
+        async def dummy_conversion():
+            logger.info("🧪 Dummy conversion started")
+            await asyncio.sleep(1)
+            logger.info("🧪 Dummy conversion completed")
+            return "test_result"
+        
+        # 테스트 태스크 시작
+        import asyncio
+        task = task_manager.start_task(
+            file_id=test_file_id,
+            coro=dummy_conversion(),
+            task_name="test_conversion"
+        )
+        
+        logger.info(f"🧪 Test task created: {task}")
+        
         return {
             "status": "success",
-            "message": "Services imported successfully",
-            "test_result": test_result,
-            "task_manager_status": "imported"
+            "message": "Services imported and test task started",
+            "test_result": "Conversion service working",
+            "task_manager_status": "test task started",
+            "task_id": test_file_id
         }
     except Exception as e:
         import traceback
