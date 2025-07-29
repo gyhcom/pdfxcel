@@ -200,9 +200,18 @@ async def upload_pdf(
             
         except Exception as task_error:
             logger.error(f"❌ Failed to start conversion task for file_id {file_id}: {task_error}")
-            # 에러가 발생해도 업로드 응답은 반환하되, 로그에 기록
             import traceback
             logger.error(f"Conversion task error traceback: {traceback.format_exc()}")
+            
+            # 에러 발생 시 히스토리 상태를 실패로 업데이트
+            if session_id:
+                await history_service.update_file_status(
+                    session_id=session_id,
+                    file_id=file_id,
+                    status="failed"
+                )
+            
+            # 에러 상황에서도 사용자에게는 성공 응답을 주지만 로그에 기록
         
         # 4. 즉시 응답 반환 (변환은 백그라운드에서 진행)
         processing_type = ProcessingType.AI if use_ai else ProcessingType.BASIC
