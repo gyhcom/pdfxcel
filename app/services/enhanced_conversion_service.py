@@ -5,7 +5,7 @@ WebSocket 진행률 업데이트와 취소 가능한 변환 작업을 지원
 import asyncio
 import aiofiles
 import os
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 import logging
 from datetime import datetime
 
