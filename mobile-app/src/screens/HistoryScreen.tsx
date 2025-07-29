@@ -205,8 +205,17 @@ const HistoryScreen: React.FC = () => {
       return 'PDF 문서';
     }
     
-    // 파일 확장자 제거하고 보기 좋게 표시
+    // 실제 파일명에서 확장자 제거
     return filename.replace(/\.[^/.]+$/, '');
+  };
+
+  const formatUploadDate = (uploadTime: string) => {
+    const uploadDate = new Date(uploadTime);
+    return uploadDate.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).replace(/\./g, '/').replace(/\s/g, '').slice(0, -1); // "2025/07/29"
   };
 
   const renderFileItem = (file: FileHistoryItem, index: number) => (
@@ -223,7 +232,7 @@ const HistoryScreen: React.FC = () => {
               {formatFileName(file.original_filename)}
             </Text>
             <Text style={styles.fileSubtitle}>
-              {historyService.formatRelativeTime(file.upload_time)} • {' '}
+              {formatUploadDate(file.upload_time)} • {' '}
               {file.processing_type === 'ai' ? 'AI 분석' : '기본 추출'}
               {file.file_size && ` • ${historyService.formatFileSize(file.file_size)}`}
             </Text>

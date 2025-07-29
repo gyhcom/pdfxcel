@@ -227,7 +227,7 @@ const UploadScreen: React.FC = () => {
       return 'PDF 문서';
     }
     
-    // 파일 확장자 제거하고 보기 좋게 표시
+    // 실제 파일명에서 확장자 제거
     return filename.replace(/\.[^/.]+$/, '');
   };
 
