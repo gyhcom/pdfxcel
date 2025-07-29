@@ -346,6 +346,7 @@ export class ApiService {
       
       // 세션 ID 가져오기
       const sessionId = await historyService.getSessionId();
+      console.log('🔍 세션 ID:', sessionId);
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.timeout);

@@ -17,6 +17,7 @@ import Toast from 'react-native-toast-message';
 import { RootStackParamList } from '../../App';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/config';
 import { apiService, ApiError } from '../services/apiService';
+import { historyService } from '../services/historyService';
 import { FileUtils } from '../utils/fileUtils';
 
 type ResultScreenRouteProp = RouteProp<RootStackParamList, 'Result'>;
@@ -232,21 +233,48 @@ const ResultScreen: React.FC = () => {
             style={[styles.actionButton, styles.secondaryButton]}
             onPress={async () => {
               try {
-                // 실제 API에서 변환된 데이터 가져오기
-                const data = await apiService.getConvertedData(fileId);
+                // 1차: API에서 변환된 데이터 가져오기 시도
+                let data;
+                try {
+                  data = await apiService.getConvertedData(fileId);
+                } catch (apiError) {
+                  console.log('API 조회 실패, 히스토리에서 시도:', apiError);
+                  
+                  // 2차: 히스토리 서비스에서 파일 정보 가져오기
+                  try {
+                    const fileInfo = await historyService.getFileInfo(fileId);
+                    if (fileInfo && fileInfo.converted_data) {
+                      data = fileInfo.converted_data;
+                    } else {
+                      throw new Error('변환된 데이터를 찾을 수 없습니다.');
+                    }
+                  } catch (historyError) {
+                    throw new Error('데이터를 불러올 수 없습니다. 파일이 아직 변환 중이거나 만료되었을 수 있습니다.');
+                  }
+                }
+                
+                if (!data || data.length === 0) {
+                  Toast.show({
+                    type: 'info',
+                    text1: '데이터 없음',
+                    text2: '미리보기할 데이터가 없습니다.',
+                    visibilityTime: 3000,
+                  });
+                  return;
+                }
                 
                 navigation.navigate('Preview', { 
                   fileId, 
                   filename, 
                   data 
                 });
-              } catch (error) {
+              } catch (error: any) {
                 console.error('Preview data fetch error:', error);
                 Toast.show({
                   type: 'error',
                   text1: '미리보기 실패',
-                  text2: '데이터를 불러올 수 없습니다.',
-                  visibilityTime: 3000,
+                  text2: error.message || '데이터를 불러올 수 없습니다.',
+                  visibilityTime: 4000,
                 });
               }
             }}
