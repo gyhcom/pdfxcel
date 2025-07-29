@@ -16,6 +16,64 @@ from app.utils.file_manager import FileManager
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+@router.get("/test-real-conversion")
+async def test_real_conversion():
+    """실제 변환 서비스 테스트"""
+    try:
+        from app.services.enhanced_conversion_service import enhanced_conversion_service
+        from app.services.task_manager import task_manager
+        import os
+        
+        logger.info("🧪 Testing real conversion service...")
+        
+        # 테스트 파일 생성
+        test_file_id = "real-test-456"
+        test_content = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\nxref\n0 3\ntrailer<</Size 3/Root 1 0 R>>\n%%EOF"
+        
+        # 임시 파일 저장
+        from app.utils.file_manager import FileManager
+        temp_path = await FileManager.save_temp_file(test_content, test_file_id, "pdf")
+        logger.info(f"🧪 Test file created at: {temp_path}")
+        
+        # 실제 변환 서비스 호출 시도
+        logger.info("🧪 Calling convert_pdf_to_excel...")
+        
+        conversion_coro = enhanced_conversion_service.convert_pdf_to_excel(
+            file_id=test_file_id,
+            file_path=temp_path,
+            original_filename="test.pdf",
+            use_ai=False,  # 일단 AI 없이 테스트
+            session_id="test-session"
+        )
+        
+        logger.info("🧪 Conversion coroutine created successfully")
+        
+        # 태스크 매니저에 등록
+        task = task_manager.start_task(
+            file_id=test_file_id,
+            coro=conversion_coro,
+            task_name="real_test_conversion"
+        )
+        
+        logger.info(f"🧪 Real conversion task started: {task}")
+        
+        return {
+            "status": "success",
+            "message": "Real conversion task started",
+            "file_id": test_file_id,
+            "temp_path": temp_path
+        }
+        
+    except Exception as e:
+        import traceback
+        logger.error(f"🧪 Real conversion test failed: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @router.get("/test-conversion")
 async def test_conversion():
     """변환 서비스 테스트용 엔드포인트"""
