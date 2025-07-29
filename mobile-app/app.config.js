@@ -20,6 +20,7 @@ export default {
       supportsTablet: true,
       bundleIdentifier: "com.pdfxcel.mobile",
       buildNumber: "1",
+      deploymentTarget: "15.1",
       infoPlist: {
         NSAppTransportSecurity: {
           NSAllowsArbitraryLoads: true,
@@ -33,8 +34,13 @@ export default {
         },
         NSDocumentsFolderUsageDescription: "이 앱은 변환된 Excel 파일을 저장하기 위해 문서 폴더에 접근합니다.",
         NSPhotoLibraryUsageDescription: "PDF 파일을 선택하기 위해 사진 라이브러리에 접근합니다.",
-        ITSAppUsesNonExemptEncryption: false
-      }
+        ITSAppUsesNonExemptEncryption: false,
+        UIStatusBarStyle: "UIStatusBarStyleDefault",
+        UIViewControllerBasedStatusBarAppearance: false
+      },
+      xcodeHeaderSearchPaths: [
+        "$(SRCROOT)/../node_modules/react-native/Libraries/Image"
+      ]
     },
     android: {
       adaptiveIcon: {

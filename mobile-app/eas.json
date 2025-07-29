@@ -8,19 +8,21 @@
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "resourceClass": "medium"
+        "resourceClass": "medium",
+        "buildConfiguration": "Debug"
       }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
-        "resourceClass": "default"
+        "resourceClass": "default",
+        "buildConfiguration": "Release"
       }
     },
     "production": {
       "ios": {
         "resourceClass": "medium",
-        "autoIncrement": "buildNumber"
+        "buildConfiguration": "Release"
       },
       "android": {
         "resourceClass": "medium"
@@ -31,8 +33,8 @@
     "production": {
       "ios": {
         "appleId": "your-apple-id@email.com",
-        "ascAppId": "placeholder",
-        "appleTeamId": "placeholder"
+        "ascAppId": "6749251647",
+        "appleTeamId": "3TMD76L95Z"
       }
     }
   }

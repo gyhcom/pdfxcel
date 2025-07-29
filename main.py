@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Railway에서 자동으로 PORT 환경변수를 제공
-PORT = int(os.environ.get("PORT", 8000))
+PORT = int(os.environ.get("PORT", 8080))
 
 print(f"🚀 Starting PDFxcel server on 0.0.0.0:{PORT}")
 print(f"📊 Environment PORT: {os.environ.get('PORT', 'Not set')}")
