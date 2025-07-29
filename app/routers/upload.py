@@ -71,20 +71,31 @@ async def upload_pdf(
             )
         
         # 2. 백그라운드에서 변환 작업 시작
-        conversion_task = enhanced_conversion_service.convert_pdf_to_excel(
-            file_id=file_id,
-            file_path=temp_pdf_path,
-            original_filename=original_filename,
-            use_ai=use_ai,
-            session_id=session_id
-        )
+        logger.info(f"🔄 Starting conversion task for file_id: {file_id}")
         
-        # 3. 태스크 매니저에 작업 등록
-        task_manager.start_task(
-            file_id=file_id,
-            coro=conversion_task,
-            task_name=f"pdf_to_excel_{original_filename}"
-        )
+        try:
+            conversion_task = enhanced_conversion_service.convert_pdf_to_excel(
+                file_id=file_id,
+                file_path=temp_pdf_path,
+                original_filename=original_filename,
+                use_ai=use_ai,
+                session_id=session_id
+            )
+            logger.info(f"🔄 Conversion task created successfully for file_id: {file_id}")
+            
+            # 3. 태스크 매니저에 작업 등록
+            task = task_manager.start_task(
+                file_id=file_id,
+                coro=conversion_task,
+                task_name=f"pdf_to_excel_{original_filename}"
+            )
+            logger.info(f"🔄 Task registered in task_manager for file_id: {file_id}, task: {task}")
+            
+        except Exception as task_error:
+            logger.error(f"❌ Failed to start conversion task for file_id {file_id}: {task_error}")
+            # 에러가 발생해도 업로드 응답은 반환하되, 로그에 기록
+            import traceback
+            logger.error(f"Conversion task error traceback: {traceback.format_exc()}")
         
         # 4. 즉시 응답 반환 (변환은 백그라운드에서 진행)
         processing_type = ProcessingType.AI if use_ai else ProcessingType.BASIC
