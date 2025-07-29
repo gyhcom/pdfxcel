@@ -149,19 +149,19 @@ const UploadScreen: React.FC = () => {
             visibilityTime: 3000,
           });
 
-          navigation.navigate('Preview', {
+          navigation.navigate('Result', {
             fileId: result.file_id,
             filename: selectedFile.name,
           });
         } catch (recordError) {
           console.error('Error recording usage:', recordError);
-          // 사용량 기록 실패해도 미리보기 화면으로 이동
+          // 사용량 기록 실패해도 결과 화면으로 이동
           setProcessingStatus({
             status: 'completed',
             result,
           });
           
-          navigation.navigate('Preview', {
+          navigation.navigate('Result', {
             fileId: result.file_id,
             filename: selectedFile.name,
           });

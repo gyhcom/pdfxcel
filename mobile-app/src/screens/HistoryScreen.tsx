@@ -232,13 +232,38 @@ const HistoryScreen: React.FC = () => {
 
       <View style={styles.fileActions}>
         {file.status === 'completed' && (
-          <TouchableOpacity
-            style={[styles.actionButton, styles.downloadButton]}
-            onPress={() => handleFileRedownload(file)}
-          >
-            <Ionicons name="download" size={16} color="white" />
-            <Text style={styles.downloadButtonText}>재다운로드</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.downloadButton]}
+              onPress={() => handleFileRedownload(file)}
+            >
+              <Ionicons name="download" size={16} color="white" />
+              <Text style={styles.downloadButtonText}>재다운로드</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.actionButton, styles.previewButton]}
+              onPress={async () => {
+                try {
+                  // Result 화면으로 이동하여 미리보기
+                  navigation.navigate('Result', {
+                    fileId: file.file_id,
+                    filename: file.original_filename
+                  });
+                } catch (error: any) {
+                  Toast.show({
+                    type: 'error',
+                    text1: '미리보기 실패',
+                    text2: '다시 시도해주세요.',
+                    visibilityTime: 3000,
+                  });
+                }
+              }}
+            >
+              <Ionicons name="eye" size={16} color={COLORS.primary} />
+              <Text style={styles.previewButtonText}>미리보기</Text>
+            </TouchableOpacity>
+          </>
         )}
         
         <TouchableOpacity
@@ -547,6 +572,17 @@ const styles = StyleSheet.create({
   },
   downloadButtonText: {
     color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: SPACING.xs,
+  },
+  previewButton: {
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  previewButtonText: {
+    color: COLORS.primary,
     fontSize: 14,
     fontWeight: '600',
     marginLeft: SPACING.xs,

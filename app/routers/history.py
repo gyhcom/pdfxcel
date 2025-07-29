@@ -5,6 +5,7 @@
 from fastapi import APIRouter, HTTPException, Header, Query
 from typing import Optional, List
 import logging
+import os
 
 from app.services.history_service import history_service, FileHistoryItem
 from app.models.schemas import HistoryResponse
