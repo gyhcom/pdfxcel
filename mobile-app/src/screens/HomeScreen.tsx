@@ -205,6 +205,16 @@ const HomeScreen: React.FC = () => {
           <Text style={styles.startButtonText}>변환 시작하기</Text>
         </TouchableOpacity>
 
+        {/* 변환 기록 버튼 */}
+        <TouchableOpacity 
+          style={styles.historyButton}
+          onPress={() => navigation.navigate('History')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="time" size={20} color={COLORS.primary} />
+          <Text style={styles.historyButtonText}>변환 기록</Text>
+        </TouchableOpacity>
+
         {/* 안내 텍스트 */}
         <View style={styles.infoContainer}>
           <Text style={styles.infoText}>
@@ -333,6 +343,24 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: SPACING.sm,
+  },
+  historyButton: {
+    backgroundColor: COLORS.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  historyButtonText: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: SPACING.xs,
   },
   infoContainer: {
     alignItems: 'center',
