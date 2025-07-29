@@ -40,6 +40,7 @@ class FileHistoryItem(BaseModel):
     file_size: Optional[int] = None
     processing_type: str = "basic"  # "ai" or "basic"
     excel_path: Optional[str] = None
+    converted_data: Optional[List[Dict]] = None  # 변환된 데이터 저장
 
 class HistoryResponse(BaseModel):
     success: bool

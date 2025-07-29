@@ -8,20 +8,12 @@ import asyncio
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel
+from app.models.schemas import FileHistoryItem  # FileHistoryItem은 schemas.py에서 정의되어야 합니다.
 import logging
 
 logger = logging.getLogger(__name__)
 
-class FileHistoryItem(BaseModel):
-    file_id: str
-    original_filename: str
-    converted_filename: str
-    upload_time: datetime
-    status: str  # "completed", "processing", "failed", "cancelled"
-    file_size: Optional[int] = None
-    processing_type: str = "basic"  # "ai" or "basic"
-    excel_path: Optional[str] = None
-    converted_data: Optional[List[Dict]] = None  # 변환된 데이터 저장
+# FileHistoryItem은 이제 schemas.py에서 import
 
 class UserSession(BaseModel):
     session_id: str
