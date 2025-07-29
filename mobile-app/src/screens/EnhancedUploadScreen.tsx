@@ -51,12 +51,16 @@ const EnhancedUploadScreen: React.FC = () => {
   
   const wsServiceRef = useRef<WebSocketService | null>(null);
   const progressAnimRef = useRef(new Animated.Value(0)).current;
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // 컴포넌트 언마운트 시 WebSocket 정리
     return () => {
       if (wsServiceRef.current) {
         wsServiceRef.current.disconnect();
+      }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
       }
     };
   }, []);
@@ -177,7 +181,13 @@ const EnhancedUploadScreen: React.FC = () => {
         }
       });
 
-      await wsServiceRef.current.connect(fileId);
+      try {
+        await wsServiceRef.current.connect(fileId);
+      } catch (wsError) {
+        console.warn('🔌 WebSocket 연결 실패, 폴링 방식으로 전환:', wsError);
+        // WebSocket 연결 실패 시 폴링으로 백업
+        startPollingStatus(fileId);
+      }
 
     } catch (error) {
       console.error('Upload error:', error);
@@ -295,6 +305,85 @@ const EnhancedUploadScreen: React.FC = () => {
       text2: '변환은 계속 진행됩니다.',
       visibilityTime: 3000,
     });
+  };
+
+  const startPollingStatus = (fileId: string) => {
+    console.log('📊 폴링 방식으로 상태 확인 시작:', fileId);
+    
+    setConversionState(prev => ({
+      ...prev,
+      status: 'processing',
+      progress: 20,
+      message: '변환 진행 중... (폴링 방식)'
+    }));
+
+    let attempts = 0;
+    const maxAttempts = 60; // 최대 5분 (5초 간격)
+    
+    pollingIntervalRef.current = setInterval(async () => {
+      attempts++;
+      
+      try {
+        // 히스토리에서 파일 상태 확인
+        const data = await apiService.getConvertedData(fileId);
+        
+        if (data && data.length > 0) {
+          // 변환 완료
+          console.log('✅ 폴링으로 변환 완료 확인');
+          
+          const progressData: ProgressData = {
+            file_id: fileId,
+            status: 'completed',
+            progress: 100,
+            message: '변환이 완료되었습니다!',
+            timestamp: new Date().toISOString()
+          };
+          
+          handleProgressUpdate(progressData);
+          
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+          return;
+        }
+        
+        // 진행률 업데이트 (추정치)
+        const estimatedProgress = Math.min(20 + (attempts * 2), 90);
+        setConversionState(prev => ({
+          ...prev,
+          progress: estimatedProgress,
+          message: `변환 진행 중... (${attempts}/${maxAttempts})`
+        }));
+        
+      } catch (error) {
+        console.log('📊 폴링 시도:', attempts, '- 아직 변환 중...');
+        
+        // 최대 시도 횟수 도달
+        if (attempts >= maxAttempts) {
+          console.error('❌ 폴링 최대 시도 횟수 초과');
+          
+          setConversionState({
+            status: 'failed',
+            progress: 0,
+            message: '변환 시간이 초과되었습니다.',
+            error: '시간 초과'
+          });
+          
+          Toast.show({
+            type: 'error',
+            text1: '변환 시간 초과',
+            text2: '다시 시도해주세요.',
+            visibilityTime: 4000,
+          });
+          
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+        }
+      }
+    }, 5000); // 5초마다 확인
   };
 
   const handleUploadError = (error: any) => {
