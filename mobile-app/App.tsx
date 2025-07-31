@@ -34,40 +34,57 @@ export default function App() {
         <Stack.Navigator
           initialRouteName="Home"
           screenOptions={{
-            headerStyle: {
-              backgroundColor: '#4CAF50',
-            },
-            headerTintColor: '#fff',
-            headerTitleStyle: {
-              fontWeight: 'bold',
-              fontSize: 18,
-            },
+            headerShown: false, // 헤더 완전 제거로 깔끔한 UI
           }}
         >
           <Stack.Screen 
             name="Home" 
             component={HomeScreen}
-            options={{ title: 'PDFXcel' }}
+            options={{ headerShown: false }}
           />
           <Stack.Screen 
             name="Upload" 
             component={UploadScreen}
-            options={{ title: 'PDF 업로드' }}
+            options={{ 
+              headerShown: true,
+              title: 'PDF 업로드',
+              headerStyle: { backgroundColor: '#FFFFFF' },
+              headerTintColor: '#333333',
+              headerTitleStyle: { fontWeight: '600' }
+            }}
           />
           <Stack.Screen 
             name="Preview" 
             component={PreviewScreen}
-            options={{ title: '미리보기' }}
+            options={{ 
+              headerShown: true,
+              title: '미리보기',
+              headerStyle: { backgroundColor: '#FFFFFF' },
+              headerTintColor: '#333333',
+              headerTitleStyle: { fontWeight: '600' }
+            }}
           />
           <Stack.Screen 
             name="Result" 
             component={ResultScreen}
-            options={{ title: '변환 완료' }}
+            options={{ 
+              headerShown: true,
+              title: '변환 완료',
+              headerStyle: { backgroundColor: '#FFFFFF' },
+              headerTintColor: '#333333',
+              headerTitleStyle: { fontWeight: '600' }
+            }}
           />
           <Stack.Screen 
             name="History" 
             component={HistoryScreen}
-            options={{ title: '변환 기록' }}
+            options={{ 
+              headerShown: true,
+              title: '변환 기록',
+              headerStyle: { backgroundColor: '#FFFFFF' },
+              headerTintColor: '#333333',
+              headerTitleStyle: { fontWeight: '600' }
+            }}
           />
           <Stack.Screen 
             name="PrivacyPolicy" 

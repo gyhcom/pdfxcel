@@ -117,16 +117,29 @@ const HomeScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
-        {/* 헤더 섹션 */}
+        {/* 새로운 헤더 섹션 - 간결하고 모던한 디자인 */}
         <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="document-text" size={60} color={COLORS.primary} />
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeText}>안녕하세요! 😊</Text>
+            <Text style={styles.title}>PDFXcel</Text>
+            <Text style={styles.subtitle}>
+              PDF 은행 명세서를 Excel로 빠르게 변환하세요
+            </Text>
           </View>
-          <Text style={styles.title}>PDFXcel</Text>
-          <Text style={styles.subtitle}>
-            PDF 은행 명세서를 Excel로 간편하게 변환하세요
-          </Text>
         </View>
+
+        {/* 메인 액션 버튼 - 가장 눈에 잘 띄는 위치로 이동 */}
+        <TouchableOpacity 
+          style={styles.mainActionButton}
+          onPress={handleStartConversion}
+          activeOpacity={0.8}
+        >
+          <View style={styles.actionButtonContent}>
+            <Ionicons name="cloud-upload" size={32} color="white" />
+            <Text style={styles.mainActionText}>파일 선택 및 변환 시작</Text>
+            <Text style={styles.mainActionSubtext}>PDF 파일을 선택해주세요</Text>
+          </View>
+        </TouchableOpacity>
 
         {/* 사용량 카드 */}
         {!loading && usageStatus && (
@@ -150,86 +163,44 @@ const HomeScreen: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        {/* 기능 설명 */}
-        <View style={styles.featuresContainer}>
-          <Text style={styles.featuresTitle}>주요 기능</Text>
+        {/* 간단한 기능 소개 - 카드 형태로 요약 */}
+        <View style={styles.quickFeaturesContainer}>
+          <View style={styles.featureCard}>
+            <Ionicons name="bulb" size={28} color={COLORS.primary} />
+            <Text style={styles.featureCardTitle}>AI 자동 분석</Text>
+            <Text style={styles.featureCardDesc}>지능형 데이터 추출</Text>
+          </View>
           
-          <View style={styles.featureItem}>
-            <Ionicons name="cloud-upload" size={24} color={COLORS.primary} />
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>간편한 업로드</Text>
-              <Text style={styles.featureDescription}>
-                PDF 파일을 선택하여 쉽게 업로드
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.featureItem}>
-            <Ionicons name="bulb" size={24} color={COLORS.primary} />
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>AI 지능형 분석</Text>
-              <Text style={styles.featureDescription}>
-                Claude AI로 정확한 데이터 추출
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.featureItem}>
-            <Ionicons name="grid" size={24} color={COLORS.primary} />
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>Excel 변환</Text>
-              <Text style={styles.featureDescription}>
-                구조화된 Excel 파일로 자동 변환
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.featureItem}>
-            <Ionicons name="share" size={24} color={COLORS.primary} />
-            <View style={styles.featureText}>
-              <Text style={styles.featureTitle}>쉬운 공유</Text>
-              <Text style={styles.featureDescription}>
-                변환된 파일을 바로 공유하거나 저장
-              </Text>
-            </View>
+          <View style={styles.featureCard}>
+            <Ionicons name="grid" size={28} color={COLORS.primary} />
+            <Text style={styles.featureCardTitle}>Excel 변환</Text>
+            <Text style={styles.featureCardDesc}>즉시 사용 가능한 형태</Text>
           </View>
         </View>
 
-        {/* 시작 버튼 */}
+        {/* 보조 액션 버튼 */}
         <TouchableOpacity 
-          style={styles.startButton}
-          onPress={handleStartConversion}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="play" size={24} color="white" />
-          <Text style={styles.startButtonText}>변환 시작하기</Text>
-        </TouchableOpacity>
-
-        {/* 변환 기록 버튼 */}
-        <TouchableOpacity 
-          style={styles.historyButton}
+          style={styles.secondaryButton}
           onPress={() => navigation.navigate('History')}
           activeOpacity={0.8}
         >
           <Ionicons name="time" size={20} color={COLORS.primary} />
-          <Text style={styles.historyButtonText}>변환 기록</Text>
+          <Text style={styles.secondaryButtonText}>변환 기록 보기</Text>
         </TouchableOpacity>
 
-        {/* 안내 텍스트 */}
+        {/* 간단한 안내 정보 */}
         <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>
-            📋 지원 형식: PDF 은행 명세서
-          </Text>
-          <Text style={styles.infoText}>
-            🔒 안전한 처리: 업로드된 파일은 24시간 후 자동 삭제
-          </Text>
+          <View style={styles.infoCard}>
+            <Ionicons name="shield-checkmark" size={24} color={COLORS.success} />
+            <Text style={styles.infoTitle}>안전한 처리</Text>
+            <Text style={styles.infoText}>업로드된 파일은 24시간 후 자동 삭제</Text>
+          </View>
           
           {/* 개인정보 처리방침 링크 */}
           <TouchableOpacity 
             style={styles.privacyLink}
             onPress={() => navigation.navigate('PrivacyPolicy')}
           >
-            <Ionicons name="shield-checkmark" size={16} color={COLORS.primary} />
             <Text style={styles.privacyLinkText}>개인정보 처리방침</Text>
           </TouchableOpacity>
         </View>
@@ -250,25 +221,20 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: SPACING.xl,
-    paddingVertical: SPACING.lg,
+    marginBottom: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
-  iconContainer: {
-    backgroundColor: COLORS.surface,
-    padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.xl,
-    marginBottom: SPACING.md,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+  welcomeSection: {
+    alignItems: 'center',
+  },
+  welcomeText: {
+    fontSize: 18,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.sm,
+    fontWeight: '500',
   },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
     color: COLORS.text,
     marginBottom: SPACING.sm,
@@ -278,12 +244,51 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
+    paddingHorizontal: SPACING.md,
   },
-  featuresContainer: {
+  // 메인 액션 버튼 스타일
+  mainActionButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.lg,
+    marginBottom: SPACING.xl,
+    padding: SPACING.lg,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    elevation: 8,
+  },
+  actionButtonContent: {
+    alignItems: 'center',
+  },
+  mainActionText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xs,
+  },
+  mainActionSubtext: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  // 새로운 기능 카드 스타일
+  quickFeaturesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.xl,
+  },
+  featureCard: {
+    flex: 1,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.xl,
+    padding: SPACING.md,
+    alignItems: 'center',
+    marginHorizontal: SPACING.xs,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -291,72 +296,36 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
-    elevation: 5,
+    elevation: 3,
   },
-  featuresTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginBottom: SPACING.lg,
-    textAlign: 'center',
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  featureText: {
-    flex: 1,
-    marginLeft: SPACING.md,
-  },
-  featureTitle: {
+  featureCardTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.text,
+    marginTop: SPACING.sm,
     marginBottom: SPACING.xs,
+    textAlign: 'center',
   },
-  featureDescription: {
-    fontSize: 14,
+  featureCardDesc: {
+    fontSize: 12,
     color: COLORS.textSecondary,
-    lineHeight: 20,
+    textAlign: 'center',
+    lineHeight: 16,
   },
-  startButton: {
-    backgroundColor: COLORS.primary,
+  // 보조 버튼 스타일
+  secondaryButton: {
+    backgroundColor: COLORS.surface,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.lg,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  startButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginLeft: SPACING.sm,
-  },
-  historyButton: {
-    backgroundColor: COLORS.surface,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
     borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  historyButtonText: {
+  secondaryButtonText: {
     color: COLORS.primary,
     fontSize: 16,
     fontWeight: '600',
@@ -365,12 +334,27 @@ const styles = StyleSheet.create({
   infoContainer: {
     alignItems: 'center',
   },
+  infoCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(76, 175, 80, 0.2)',
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
   infoText: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginBottom: SPACING.sm,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   devButton: {
     flexDirection: 'row',
@@ -388,17 +372,14 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.xs,
   },
   privacyLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: SPACING.lg,
     paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
   },
   privacyLinkText: {
     fontSize: 14,
     color: COLORS.primary,
-    marginLeft: SPACING.xs,
     textDecorationLine: 'underline',
+    textAlign: 'center',
   },
 });
 
