@@ -128,18 +128,54 @@ const HomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* 메인 액션 버튼 - 가장 눈에 잘 띄는 위치로 이동 */}
-        <TouchableOpacity 
-          style={styles.mainActionButton}
-          onPress={handleStartConversion}
-          activeOpacity={0.8}
-        >
-          <View style={styles.actionButtonContent}>
-            <Ionicons name="cloud-upload" size={32} color="white" />
-            <Text style={styles.mainActionText}>파일 선택 및 변환 시작</Text>
-            <Text style={styles.mainActionSubtext}>PDF 파일을 선택해주세요</Text>
-          </View>
-        </TouchableOpacity>
+        {/* 메인 기능 그리드 - 2x2 카드 레이아웃 */}
+        <View style={styles.mainGrid}>
+          <TouchableOpacity 
+            style={[styles.gridCard, styles.uploadCard]}
+            onPress={handleStartConversion}
+            activeOpacity={0.8}
+          >
+            <View style={styles.cardIconContainer}>
+              <Ionicons name="cloud-upload" size={28} color="white" />
+            </View>
+            <Text style={styles.cardTitle}>PDF 업로드</Text>
+            <Text style={styles.cardSubtitle}>파일 선택하기</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.gridCard, styles.historyCard]}
+            onPress={() => navigation.navigate('History')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.cardIconContainer}>
+              <Ionicons name="time" size={28} color="white" />
+            </View>
+            <Text style={styles.cardTitle}>변환 기록</Text>
+            <Text style={styles.cardSubtitle}>이전 파일들</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.gridCard, styles.aiCard]}
+            activeOpacity={0.8}
+          >
+            <View style={styles.cardIconContainer}>
+              <Ionicons name="bulb" size={28} color="white" />
+            </View>
+            <Text style={styles.cardTitle}>AI 분석</Text>
+            <Text style={styles.cardSubtitle}>지능형 추출</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.gridCard, styles.excelCard]}
+            activeOpacity={0.8}
+          >
+            <View style={styles.cardIconContainer}>
+              <Ionicons name="grid" size={28} color="white" />
+            </View>
+            <Text style={styles.cardTitle}>Excel 변환</Text>
+            <Text style={styles.cardSubtitle}>즉시 사용가능</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* 사용량 카드 */}
         {!loading && usageStatus && (
@@ -163,30 +199,41 @@ const HomeScreen: React.FC = () => {
           </TouchableOpacity>
         )}
 
-        {/* 간단한 기능 소개 - 카드 형태로 요약 */}
-        <View style={styles.quickFeaturesContainer}>
-          <View style={styles.featureCard}>
-            <Ionicons name="bulb" size={28} color={COLORS.primary} />
-            <Text style={styles.featureCardTitle}>AI 자동 분석</Text>
-            <Text style={styles.featureCardDesc}>지능형 데이터 추출</Text>
-          </View>
-          
-          <View style={styles.featureCard}>
-            <Ionicons name="grid" size={28} color={COLORS.primary} />
-            <Text style={styles.featureCardTitle}>Excel 변환</Text>
-            <Text style={styles.featureCardDesc}>즉시 사용 가능한 형태</Text>
-          </View>
+        {/* 추가 기능들 - 작은 카드 형태 */}
+        <Text style={styles.sectionTitle}>추가 기능</Text>
+        <View style={styles.additionalFeaturesContainer}>
+          <TouchableOpacity style={styles.smallCard}>
+            <View style={styles.smallCardIcon}>
+              <Ionicons name="shield-checkmark" size={24} color={COLORS.success} />
+            </View>
+            <Text style={styles.smallCardTitle}>보안</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.smallCard}>
+            <View style={styles.smallCardIcon}>
+              <Ionicons name="settings" size={24} color={COLORS.secondary} />
+            </View>
+            <Text style={styles.smallCardTitle}>설정</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.smallCard}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
+          >
+            <View style={styles.smallCardIcon}>
+              <Ionicons name="document-text" size={24} color={COLORS.warning} />
+            </View>
+            <Text style={styles.smallCardTitle}>정책</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.smallCard}>
+            <View style={styles.smallCardIcon}>
+              <Ionicons name="help-circle" size={24} color={COLORS.primary} />
+            </View>
+            <Text style={styles.smallCardTitle}>도움말</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* 보조 액션 버튼 */}
-        <TouchableOpacity 
-          style={styles.secondaryButton}
-          onPress={() => navigation.navigate('History')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="time" size={20} color={COLORS.primary} />
-          <Text style={styles.secondaryButtonText}>변환 기록 보기</Text>
-        </TouchableOpacity>
 
         {/* 간단한 안내 정보 */}
         <View style={styles.infoContainer}>
@@ -246,49 +293,85 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     paddingHorizontal: SPACING.md,
   },
-  // 메인 액션 버튼 스타일
-  mainActionButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.lg,
+  // 메인 그리드 스타일
+  mainGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     marginBottom: SPACING.xl,
+  },
+  gridCard: {
+    width: '48%',
+    aspectRatio: 1.2,
+    borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
+    marginBottom: SPACING.md,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
     elevation: 8,
   },
-  actionButtonContent: {
+  cardIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
   },
-  mainActionText: {
+  cardTitle: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginTop: SPACING.sm,
     marginBottom: SPACING.xs,
   },
-  mainActionSubtext: {
+  cardSubtitle: {
     color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
   },
-  // 새로운 기능 카드 스타일
-  quickFeaturesContainer: {
+  // 각 카드별 색상
+  uploadCard: {
+    backgroundColor: '#FF6B6B', // 빨간색
+  },
+  historyCard: {
+    backgroundColor: '#4ECDC4', // 청록색
+  },
+  aiCard: {
+    backgroundColor: '#45B7D1', // 파란색
+  },
+  excelCard: {
+    backgroundColor: '#96CEB4', // 녹색
+  },
+  // 섹션 제목 스타일
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.text,
+    marginBottom: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+  // 추가 기능 컨테이너
+  additionalFeaturesContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     marginBottom: SPACING.xl,
   },
-  featureCard: {
-    flex: 1,
+  smallCard: {
+    width: '22%',
+    aspectRatio: 1,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
+    padding: SPACING.sm,
     alignItems: 'center',
-    marginHorizontal: SPACING.xs,
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -298,38 +381,20 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 3,
   },
-  featureCardTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.xs,
-    textAlign: 'center',
-  },
-  featureCardDesc: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  // 보조 버튼 스타일
-  secondaryButton: {
-    backgroundColor: COLORS.surface,
-    flexDirection: 'row',
+  smallCardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: 'rgba(0,0,0,0.05)',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.xl,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    marginBottom: SPACING.xs,
   },
-  secondaryButtonText: {
-    color: COLORS.primary,
-    fontSize: 16,
+  smallCardTitle: {
+    fontSize: 12,
     fontWeight: '600',
-    marginLeft: SPACING.xs,
+    color: COLORS.text,
+    textAlign: 'center',
   },
   infoContainer: {
     alignItems: 'center',
