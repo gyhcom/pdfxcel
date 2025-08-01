@@ -15,8 +15,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../../App';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/config';
 import { userPlanService } from '../services/userPlanService';
+import { aiOnlyService, UserAIState } from '../services/aiOnlyService';
 import { UsageStatus } from '../types';
 import UsageCard from '../components/UsageCard';
+import ModernCard, { HorizontalCardList, TileGrid, PlateGrid } from '../components/ModernCard';
+import SubscriptionPrompt from '../components/SubscriptionPrompt';
+import RewardedAdPrompt from '../components/RewardedAdPrompt';
+import DailyLimitReached from '../components/DailyLimitReached';
 
 const ICON_SIZE = 28;
 
@@ -27,13 +32,32 @@ const HomeScreen: React.FC = () => {
   const [usageStatus, setUsageStatus] = useState<UsageStatus | null>(null);
   const [planType, setPlanType] = useState<'FREE' | 'PRO'>('FREE');
   const [loading, setLoading] = useState(true);
+  const [aiState, setAiState] = useState<UserAIState | null>(null);
+  const [subscriptionPrompt, setSubscriptionPrompt] = useState<{
+    visible: boolean;
+    trigger: 'usage_limit' | 'feature_locked' | 'speed_boost' | 'ad_free';
+  }>({
+    visible: false,
+    trigger: 'usage_limit',
+  });
+  const [rewardedAdPrompt, setRewardedAdPrompt] = useState(false);
+  const [dailyLimitModal, setDailyLimitModal] = useState(false);
 
   const loadUsageData = async () => {
     try {
       setLoading(true);
       const stats = await userPlanService.getUsageStats();
+      const aiUserState = await aiOnlyService.getUserAIState();
+      
       setUsageStatus(stats.usageStatus);
       setPlanType(stats.plan);
+      setAiState(aiUserState);
+      
+      // AI 서비스와 기존 서비스 동기화
+      if (stats.plan === 'PRO' && !aiUserState.isProUser) {
+        await aiOnlyService.setProUser(true);
+        setAiState(await aiOnlyService.getUserAIState());
+      }
     } catch (error) {
       console.error('Error loading usage data:', error);
     } finally {
@@ -44,31 +68,108 @@ const HomeScreen: React.FC = () => {
   useFocusEffect(useCallback(() => { loadUsageData(); }, []));
 
   const handleStartConversion = async () => {
-    if (!usageStatus) return navigation.navigate('Upload');
+    const aiAvailability = await aiOnlyService.canUseAI();
+    
+    switch (aiAvailability.reason) {
+      case 'pro_unlimited':
+        // PRO 사용자는 바로 변환
+        navigation.navigate('Upload');
+        break;
+        
+      case 'need_ad':
+        // 광고 시청 필요
+        setRewardedAdPrompt(true);
+        break;
+        
+      case 'free_available':
+        // 무료 사용 가능 (광고 시청 완료)
+        navigation.navigate('Upload');
+        break;
+        
+      case 'need_subscription':
+        // 오늘 사용량 소진, PRO 구독 필요
+        setDailyLimitModal(true);
+        break;
+        
+      default:
+        navigation.navigate('Upload');
+    }
+  };
 
-    const canUploadResult = await userPlanService.canUpload(false);
-    if (!canUploadResult.allowed) {
-      Alert.alert(
-        '업로드 제한',
-        canUploadResult.reason || '업로드가 제한되었습니다.',
-        [
-          { text: '확인', style: 'default' },
-          ...(planType === 'FREE' ? [{ text: 'PRO 업그레이드', onPress: handleUpgradePress }] : []),
-        ]
-      );
+  const handleAIAnalysis = () => {
+    if (planType === 'FREE') {
+      setSubscriptionPrompt({
+        visible: true,
+        trigger: 'feature_locked',
+      });
       return;
     }
-    navigation.navigate('Upload');
+    // AI 분석 로직
+  };
+
+  const handleSpeedBoost = () => {
+    if (planType === 'FREE') {
+      setSubscriptionPrompt({
+        visible: true,
+        trigger: 'speed_boost',
+      });
+      return;
+    }
+    // 빠른 변환 로직
   };
 
   const handleUpgradePress = () => {
-    Alert.alert('PRO 플랜 업그레이드', 'PRO 플랜으로 업그레이드하면 무제한으로 PDF를 변환할 수 있습니다.', [
-      { text: '나중에', style: 'cancel' },
-      { text: '개발용 PRO 활성화', onPress: async () => {
-        await userPlanService.setProUser(true);
-        await loadUsageData();
-      }}
-    ]);
+    setSubscriptionPrompt({
+      visible: true,
+      trigger: 'usage_limit',
+    });
+  };
+
+  const handleWatchAd = async () => {
+    try {
+      // 실제로는 Google AdMob이나 다른 광고 SDK 호출
+      // 여기서는 시뮬레이션
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      await aiOnlyService.markAdWatched();
+      await loadUsageData();
+      setRewardedAdPrompt(false);
+      
+      Alert.alert(
+        '🎉 광고 시청 완료!',
+        '오늘의 무료 AI 변환이 활성화되었습니다!',
+        [{ text: '변환하기', onPress: () => navigation.navigate('Upload') }]
+      );
+    } catch (error) {
+      Alert.alert('오류', '광고 로딩 중 문제가 발생했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  const handleSubscribe = async () => {
+    // 실제 구독 처리 로직 (Apple/Google 인앱 결제)
+    try {
+      // 개발용으로 임시 PRO 활성화
+      await userPlanService.setProUser(true);
+      await aiOnlyService.setProUser(true);
+      await loadUsageData();
+      
+      // 모든 모달 닫기
+      setSubscriptionPrompt({ visible: false, trigger: 'usage_limit' });
+      setRewardedAdPrompt(false);
+      setDailyLimitModal(false);
+      
+      Alert.alert(
+        '🎉 업그레이드 완료!',
+        'PRO 플랜이 활성화되었습니다. 무제한으로 PDF를 변환해보세요!',
+        [{ text: '시작하기', style: 'default' }]
+      );
+    } catch (error) {
+      Alert.alert('오류', '업그레이드 중 문제가 발생했습니다. 다시 시도해주세요.');
+    }
+  };
+
+  const handleCloseSubscriptionPrompt = () => {
+    setSubscriptionPrompt({ visible: false, trigger: 'usage_limit' });
   };
 
   const handlePlanToggle = async () => {
@@ -82,16 +183,75 @@ const HomeScreen: React.FC = () => {
     ]);
   };
 
-  const renderCard = (title: string, subtitle: string, icon: any, color: string, onPress?: () => void) => (
-    <TouchableOpacity
-      style={[styles.gridCard, { backgroundColor: color }]} onPress={onPress} activeOpacity={0.8}>
-      <View style={styles.cardIconContainer}>
-        <Ionicons name={icon} size={ICON_SIZE} color="white" />
-      </View>
-      <Text style={styles.cardTitle}>{title}</Text>
-      <Text style={styles.cardSubtitle}>{subtitle}</Text>
-    </TouchableOpacity>
-  );
+  // 카드 데이터 정의 - AI 전용
+  const getMainCardSubtitle = () => {
+    if (planType === 'PRO') return 'AI 무제한 변환';
+    if (aiState?.adWatchedToday && !aiState?.aiFreeUsedToday) return 'AI 변환 준비됨';
+    if (aiState?.aiFreeUsedToday) return '내일 다시 가능';
+    return '광고 보고 AI 변환';
+  };
+
+  const mainCards = [
+    {
+      title: 'AI PDF 변환',
+      subtitle: getMainCardSubtitle(),
+      icon: 'sparkles',
+      color: '#667eea',
+      onPress: handleStartConversion,
+    },
+    {
+      title: '변환 기록',
+      subtitle: '이전 파일들',
+      icon: 'time',
+      color: '#4ECDC4',
+      onPress: () => navigation.navigate('History'),
+    },
+    {
+      title: '프리미엄 변환',
+      subtitle: planType === 'FREE' ? 'PRO 전용' : '고급 AI 분석',
+      icon: 'diamond',
+      color: '#45B7D1',
+      onPress: handleAIAnalysis,
+    },
+    {
+      title: 'Excel 내보내기',
+      subtitle: '완벽한 표 형식',
+      icon: 'grid',
+      color: '#96CEB4',
+      onPress: () => navigation.navigate('History'),
+    },
+  ];
+
+  const quickActions = [
+    {
+      title: '빠른 변환',
+      subtitle: planType === 'FREE' ? '2배 빠름 (PRO)' : '우선 처리',
+      icon: 'flash',
+      color: '#FF8A80',
+      onPress: handleSpeedBoost,
+    },
+    {
+      title: '광고 제거',
+      subtitle: planType === 'FREE' ? 'PRO 전용' : '광고 없음',
+      icon: 'shield-checkmark',
+      color: '#82B1FF',
+      onPress: () => {
+        if (planType === 'FREE') {
+          setSubscriptionPrompt({
+            visible: true,
+            trigger: 'ad_free',
+          });
+        }
+      },
+    },
+    {
+      title: '도움말',
+      subtitle: '사용 가이드',
+      icon: 'help-circle',
+      color: '#A5D6A7',
+      onPress: () => {},
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.container}>
@@ -102,24 +262,73 @@ const HomeScreen: React.FC = () => {
           <Text style={styles.subtitle}>PDF 은행 명세서를 Excel로 빠르게 변환하세요</Text>
         </View>
 
-        <View style={styles.mainGrid}>
-          {renderCard('PDF 업로드', '파일 선택하기', 'cloud-upload', '#FF6B6B', handleStartConversion)}
-          {renderCard('변환 기록', '이전 파일들', 'time', '#4ECDC4', () => navigation.navigate('History'))}
-          {renderCard('AI 분석', '지능형 추출', 'bulb', '#45B7D1')}
-          {renderCard('Excel 변환', '즉시 사용가능', 'grid', '#96CEB4')}
+        {/* 메인 기능 카드들 - 타일 그리드 */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>주요 기능</Text>
         </View>
+        <TileGrid cards={mainCards} />
+
+        {/* 빠른 액션 - 작은 플레이트 카드들 */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>빠른 액션</Text>
+        </View>
+        <PlateGrid cards={quickActions} />
 
         {!loading && usageStatus && (
-          <UsageCard usageStatus={usageStatus} planType={planType} onUpgradePress={handleUpgradePress} />
+          <UsageCard 
+            usageStatus={usageStatus} 
+            planType={planType} 
+            onUpgradePress={handleUpgradePress}
+            aiState={aiState ? {
+              aiFreeUsedToday: aiState.aiFreeUsedToday,
+              adWatchedToday: aiState.adWatchedToday,
+            } : undefined}
+          />
         )}
 
         {__DEV__ && (
-          <TouchableOpacity style={styles.devButton} onPress={handlePlanToggle}>
-            <Ionicons name="settings" size={16} color={COLORS.textSecondary} />
-            <Text style={styles.devButtonText}>개발용: {planType} 플랜 토글</Text>
-          </TouchableOpacity>
+          <View>
+            <TouchableOpacity style={styles.devButton} onPress={handlePlanToggle}>
+              <Ionicons name="settings" size={16} color={COLORS.textSecondary} />
+              <Text style={styles.devButtonText}>개발용: {planType} 플랜 토글</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.devButton} 
+              onPress={async () => {
+                await aiOnlyService.resetForTesting();
+                await loadUsageData();
+                Alert.alert('리셋 완료', 'AI 사용량이 초기화되었습니다.');
+              }}
+            >
+              <Ionicons name="refresh" size={16} color={COLORS.textSecondary} />
+              <Text style={styles.devButtonText}>개발용: AI 상태 리셋</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </ScrollView>
+
+      {/* 구독 프롬프트 */}
+      <SubscriptionPrompt
+        visible={subscriptionPrompt.visible}
+        trigger={subscriptionPrompt.trigger}
+        onClose={handleCloseSubscriptionPrompt}
+        onSubscribe={handleSubscribe}
+      />
+
+      {/* 리워드 광고 프롬프트 */}
+      <RewardedAdPrompt
+        visible={rewardedAdPrompt}
+        onClose={() => setRewardedAdPrompt(false)}
+        onWatchAd={handleWatchAd}
+        onSubscribe={handleSubscribe}
+      />
+
+      {/* 일일 사용량 소진 모달 */}
+      <DailyLimitReached
+        visible={dailyLimitModal}
+        onClose={() => setDailyLimitModal(false)}
+        onSubscribe={handleSubscribe}
+      />
     </SafeAreaView>
   );
 };
@@ -157,43 +366,16 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     paddingHorizontal: SPACING.md,
   },
-  mainGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.xl,
-  },
-  gridCard: {
-    width: '48%',
-    aspectRatio: 1.2,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
+  sectionHeader: {
+    marginTop: SPACING.lg,
     marginBottom: SPACING.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 8,
+    paddingHorizontal: SPACING.xs,
   },
-  cardIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: SPACING.md,
-  },
-  cardTitle: {
-    color: 'white',
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: SPACING.xs,
-  },
-  cardSubtitle: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 13,
-    fontWeight: '500',
+    fontWeight: '600',
+    color: COLORS.text,
+    letterSpacing: -0.3,
   },
   devButton: {
     flexDirection: 'row',

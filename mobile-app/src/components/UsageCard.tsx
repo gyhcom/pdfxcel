@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SPACING, BORDER_RADIUS } from '../constants/config';
 import { UsageStatus } from '../types';
 
@@ -10,12 +9,17 @@ interface UsageCardProps {
   usageStatus: UsageStatus;
   planType: 'FREE' | 'PRO';
   onUpgradePress?: () => void;
+  aiState?: {
+    aiFreeUsedToday: boolean;
+    adWatchedToday: boolean;
+  };
 }
 
 const UsageCard: React.FC<UsageCardProps> = ({
   usageStatus,
   planType,
   onUpgradePress,
+  aiState,
 }) => {
   const formatRemaining = (remaining: number | 'unlimited'): string => {
     return remaining === 'unlimited' ? '무제한' : `${remaining}회`;
@@ -28,31 +32,12 @@ const UsageCard: React.FC<UsageCardProps> = ({
     return COLORS.primary;
   };
 
-  // 사용률 계산 함수
-  const getUploadProgress = () => {
-    if (usageStatus.remainingUploads === 'unlimited') return 100;
-    const total = planType === 'PRO' ? 100 : 5; // PRO는 무제한, FREE는 5개
-    const used = total - (usageStatus.remainingUploads as number);
-    return (used / total) * 100;
-  };
-
-  const getAiProgress = () => {
-    if (usageStatus.remainingAiUploads === 'unlimited') return 100;
-    const total = planType === 'PRO' ? 100 : 3; // PRO는 무제한, FREE는 3개
-    const used = total - (usageStatus.remainingAiUploads as number);
-    return (used / total) * 100;
-  };
 
   return (
-    <LinearGradient
-      colors={planType === 'PRO' ? ['#f093fb', '#f5576c'] : ['#667eea', '#764ba2']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
-    >
+    <View style={[styles.container, { backgroundColor: planType === 'PRO' ? '#ffffff' : '#ffffff' }]}>
       {/* 플랜 헤더 - 미니멀 */}
       <View style={styles.header}>
-        <View style={styles.planBadge}>
+        <View style={[styles.planBadge, { backgroundColor: planType === 'PRO' ? '#667eea' : '#64748b' }]}>
           <Ionicons 
             name={planType === 'PRO' ? 'diamond' : 'person'} 
             size={16} 
@@ -74,82 +59,48 @@ const UsageCard: React.FC<UsageCardProps> = ({
         )}
       </View>
 
-      {/* 사용량 대시보드 - 원형 프로그레스 */}
-      <View style={styles.dashboardContainer}>
-        
-        {/* 업로드 진행률 */}
-        <View style={styles.progressItem}>
-          <View style={styles.progressCircle}>
-            <View style={[styles.circleProgress, { 
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              borderColor: 'rgba(255, 255, 255, 0.4)',
-              borderWidth: getUploadProgress() > 0 ? 3 : 1,
-            }]}>
-              <Ionicons name="cloud-upload" size={24} color="white" />
-            </View>
-            <View style={[
-              styles.progressBar,
-              { width: `${getUploadProgress()}%`, backgroundColor: 'rgba(255, 255, 255, 0.6)' }
-            ]} />
+      {/* AI 전용 사용량 통계 */}
+      <View style={styles.statsContainer}>
+        <View style={styles.statItem}>
+          <View style={styles.statHeader}>
+            <Ionicons name="sparkles" size={16} color="#667eea" />
+            <Text style={styles.statLabel}>AI 변환</Text>
           </View>
-          <Text style={styles.progressLabel}>업로드</Text>
-          <Text style={styles.progressValue}>
-            {usageStatus.remainingUploads === 'unlimited' ? '∞' : usageStatus.remainingUploads}
+          <Text style={styles.statValue}>
+            {planType === 'PRO' 
+              ? '무제한' 
+              : aiState?.aiFreeUsedToday 
+                ? '내일 다시 가능' 
+                : aiState?.adWatchedToday 
+                  ? '준비됨' 
+                  : '광고 시청 필요'
+            }
           </Text>
         </View>
 
-        {/* AI 분석 진행률 */}
-        <View style={styles.progressItem}>
-          <View style={styles.progressCircle}>
-            <View style={[styles.circleProgress, { 
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              borderColor: 'rgba(255, 255, 255, 0.4)',
-              borderWidth: getAiProgress() > 0 ? 3 : 1,
-            }]}>
-              <Ionicons name="bulb" size={24} color="white" />
-            </View>
-            <View style={[
-              styles.progressBar,
-              { width: `${getAiProgress()}%`, backgroundColor: 'rgba(255, 255, 255, 0.6)' }
-            ]} />
+        <View style={styles.statDivider} />
+
+        <View style={styles.statItem}>
+          <View style={styles.statHeader}>
+            <Ionicons name="flash" size={16} color={planType === 'PRO' ? COLORS.success : COLORS.textSecondary} />
+            <Text style={styles.statLabel}>처리 속도</Text>
           </View>
-          <Text style={styles.progressLabel}>AI 분석</Text>
-          <Text style={styles.progressValue}>
-            {usageStatus.remainingAiUploads === 'unlimited' ? '∞' : usageStatus.remainingAiUploads}
+          <Text style={styles.statValue}>
+            {planType === 'PRO' ? '2배 빠름' : '표준'}
           </Text>
         </View>
       </View>
 
-      {/* 상태 표시 및 리셋 정보 */}
-      <View style={styles.footerContainer}>
-        {/* 상태 아이콘들 */}
-        <View style={styles.statusIcons}>
-          {!usageStatus.canUpload && (
-            <View style={styles.statusIcon}>
-              <Ionicons name="close-circle" size={16} color="rgba(255, 255, 255, 0.8)" />
-            </View>
-          )}
-          {usageStatus.canUpload && !usageStatus.canUseAI && (
-            <View style={styles.statusIcon}>
-              <Ionicons name="warning" size={16} color="rgba(255, 255, 255, 0.8)" />
-            </View>
-          )}
-          {usageStatus.canUpload && usageStatus.canUseAI && (
-            <View style={styles.statusIcon}>
-              <Ionicons name="checkmark-circle" size={16} color="rgba(255, 255, 255, 0.8)" />
-            </View>
-          )}
-        </View>
-        
-        {/* 리셌 시간 - 시각적 */}
-        {planType === 'FREE' && (
+      {/* 리셋 정보만 간단히 표시 */}
+      {planType === 'FREE' && (
+        <View style={styles.footerContainer}>
           <View style={styles.resetInfo}>
-            <Ionicons name="time" size={14} color="rgba(255, 255, 255, 0.6)" />
-            <Text style={styles.resetText}>내일 00:00 초기화</Text>
+            <Ionicons name="time" size={14} color={COLORS.textSecondary} />
+            <Text style={[styles.resetText, { color: COLORS.textSecondary }]}>내일 00:00 초기화</Text>
           </View>
-        )}
-      </View>
-    </LinearGradient>
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -158,14 +109,16 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.lg,
     marginVertical: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
@@ -176,7 +129,6 @@ const styles = StyleSheet.create({
   planBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.lg,
@@ -190,12 +142,12 @@ const styles = StyleSheet.create({
   upgradeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: COLORS.primaryDark,
   },
   upgradeButtonText: {
     color: 'white',
@@ -203,62 +155,50 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: SPACING.xs,
   },
-  dashboardContainer: {
+  statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    alignItems: 'center',
     marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.xs,
   },
-  progressItem: {
-    alignItems: 'center',
+  statItem: {
     flex: 1,
-  },
-  progressCircle: {
-    position: 'relative',
-    marginBottom: SPACING.sm,
-  },
-  circleProgress: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  progressBar: {
-    position: 'absolute',
-    bottom: -4,
-    left: 0,
-    height: 4,
-    borderRadius: 2,
-    transition: 'width 0.3s ease',
-  },
-  progressLabel: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '500',
+  statHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: SPACING.xs,
   },
-  progressValue: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
+  statLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
+    marginLeft: SPACING.xs,
+  },
+  statValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: COLORS.border,
+    marginHorizontal: SPACING.md,
   },
   footerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  statusIcons: {
-    flexDirection: 'row',
-  },
-  statusIcon: {
-    marginRight: SPACING.xs,
   },
   resetInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   resetText: {
-    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 11,
     fontWeight: '500',
     marginLeft: SPACING.xs,

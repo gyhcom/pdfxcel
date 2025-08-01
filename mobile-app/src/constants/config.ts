@@ -2,8 +2,8 @@ import { ApiConfig } from '../types';
 
 export const API_CONFIG: ApiConfig = {
   baseUrl: __DEV__ 
-    ? 'https://pdfxcel-production.up.railway.app/api'  // 개발 환경 - Railway 프로덕션 서버
-    : 'https://pdfxcel-production.up.railway.app/api',  // 프로덕션 환경 - Railway 서버
+    ? 'https://pdfxcel.railway.app/api'  // 개발 환경 - Railway 프로덕션 서버
+    : 'https://pdfxcel.railway.app/api',  // 프로덕션 환경
   timeout: 30000, // 30초
 };
 
