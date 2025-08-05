@@ -67,7 +67,7 @@ class TablePreviewData {
 
 class ApiService {
   static const String _baseUrl = 'https://pdfxcel-production.up.railway.app/api';
-  static const int _timeout = 30000; // 30초
+  static const int _timeout = 60000; // 60초로 증가
   
   late final Dio _dio;
 
@@ -97,21 +97,22 @@ class ApiService {
       // health 엔드포인트는 /api 없이 루트에 있음
       final healthDio = Dio(BaseOptions(
         baseUrl: 'https://pdfxcel-production.up.railway.app',
-        connectTimeout: Duration(milliseconds: 5000),
-        receiveTimeout: Duration(milliseconds: 5000),
+        connectTimeout: Duration(milliseconds: 15000), // 15초로 증가
+        receiveTimeout: Duration(milliseconds: 15000), // 15초로 증가
       ));
       
       final response = await healthDio.get('/health');
       return response.statusCode == 200;
     } catch (e) {
-      print('네트워크 연결 확인 실패: $e');
-      return false;
+      debugPrint('네트워크 연결 확인 실패: $e');
+      // health check 실패해도 true 반환 (실제 업로드에서 재시도)
+      return true;
     }
   }
 
   // 에러 분류 및 사용자 친화적 메시지 생성
   ApiError _createApiError(dynamic error, String context) {
-    print('API Error in $context: $error');
+    debugPrint('API Error in $context: $error');
     
     if (error is DioException) {
       switch (error.type) {
@@ -209,16 +210,10 @@ class ApiService {
     Function(int, int)? onSendProgress,
   }) async {
     try {
-      print('🚀 PDF 업로드 시작: $fileName (AI: $useAi)');
+      debugPrint('🚀 PDF 업로드 시작: $fileName (AI: $useAi)');
       
-      // 네트워크 연결 확인
-      final isConnected = await _checkNetworkConnection();
-      if (!isConnected) {
-        throw ApiError(
-          code: 'NETWORK_ERROR',
-          message: '인터넷 연결을 확인해주세요.',
-        );
-      }
+      // 네트워크 연결 확인 (실패해도 계속 진행)
+      await _checkNetworkConnection();
 
       // 파일 크기 확인
       final file = File(filePath);
@@ -235,7 +230,7 @@ class ApiService {
 
       // 파일 크기 로깅
       final fileBytes = await file.readAsBytes();
-      print('📄 파일 크기: ${fileBytes.length} bytes');
+      debugPrint('📄 파일 크기: ${fileBytes.length} bytes');
 
       // FormData 생성 (multipart/form-data 형식)
       final formData = FormData.fromMap({
@@ -248,7 +243,7 @@ class ApiService {
         'original_filename': fileName,
       });
 
-      print('🔑 세션 ID: $sessionId');
+      debugPrint('🔑 세션 ID: $sessionId');
       
       // 업로드 요청
       final response = await _dio.post(
@@ -261,15 +256,17 @@ class ApiService {
             'Content-Type': 'multipart/form-data',
           },
           validateStatus: (status) => status! < 500, // 4xx 에러도 응답으로 받음
+          sendTimeout: Duration(minutes: 2), // 업로드 timeout 2분
+          receiveTimeout: Duration(minutes: 1), // 응답 timeout 1분
         ),
       );
       
-      print('📤 업로드 응답: ${response.statusCode}');
-      print('📤 응답 데이터: ${response.data}');
-      print('📤 응답 헤더: ${response.headers}');
+      debugPrint('📤 업로드 응답: ${response.statusCode}');
+      debugPrint('📤 응답 데이터: ${response.data}');
+      debugPrint('📤 응답 헤더: ${response.headers}');
       
       if (response.statusCode != 200) {
-        print('❌ HTTP ${response.statusCode} 에러: ${response.data}');
+        debugPrint('❌ HTTP ${response.statusCode} 에러: ${response.data}');
         throw _createApiError(
           DioException.badResponse(
             statusCode: response.statusCode!,
@@ -290,33 +287,33 @@ class ApiService {
         );
       }
       
-      print('✅ 업로드 성공: ${uploadResponse.fileId}');
-      print('🔄 처리 타입: ${uploadResponse.processingType}');
-      print('📝 응답 메시지: ${uploadResponse.message}');
+      debugPrint('✅ 업로드 성공: ${uploadResponse.fileId}');
+      debugPrint('🔄 처리 타입: ${uploadResponse.processingType}');
+      debugPrint('📝 응답 메시지: ${uploadResponse.message}');
       
       // 업로드 성공 후 즉시 작업 상태 확인
       try {
         await Future.delayed(Duration(seconds: 1)); // 1초 대기
         final status = await getConversionStatus(uploadResponse.fileId);
-        print('🔍 초기 변환 상태: ${status['status']} - ${status['message']}');
+        debugPrint('🔍 초기 변환 상태: ${status['status']} - ${status['message']}');
       } catch (e) {
-        print('⚠️ 상태 확인 실패 (정상적): $e');
+        debugPrint('⚠️ 상태 확인 실패 (정상적): $e');
       }
       
       return uploadResponse;
 
     } catch (error) {
-      print('❌ 업로드 실패 상세: $error');
+      debugPrint('❌ 업로드 실패 상세: $error');
       if (error is DioException) {
-        print('❌ DioException 세부정보:');
-        print('   - Type: ${error.type}');
-        print('   - Message: ${error.message}');
-        print('   - Response: ${error.response?.data}');
-        print('   - Status Code: ${error.response?.statusCode}');
+        debugPrint('❌ DioException 세부정보:');
+        debugPrint('   - Type: ${error.type}');
+        debugPrint('   - Message: ${error.message}');
+        debugPrint('   - Response: ${error.response?.data}');
+        debugPrint('   - Status Code: ${error.response?.statusCode}');
       }
       
       if (error is ApiError) {
-        throw error;
+        rethrow;
       }
       throw _createApiError(error, 'uploadPdf');
     }
@@ -325,22 +322,30 @@ class ApiService {
   // Excel 다운로드
   Future<String> downloadExcel(String fileId) async {
     try {
-      print('📥 Excel 다운로드 시작: $fileId');
+      debugPrint('📥 Excel 다운로드 시작: $fileId');
       
-      // 네트워크 연결 확인
-      final isConnected = await _checkNetworkConnection();
-      if (!isConnected) {
-        throw ApiError(
-          code: 'NETWORK_ERROR',
-          message: '인터넷 연결을 확인해주세요.',
-        );
-      }
+      // 네트워크 연결 확인 (실패해도 계속 진행)
+      await _checkNetworkConnection();
       
       // 세션 ID 가져오기
       final sessionId = await _getSessionId();
       
-      // 다운로드 경로 설정
+      // 다운로드 경로 설정 - iOS에서 파일 앱 접근 가능하도록 Documents 폴더 사용
       final directory = await getApplicationDocumentsDirectory();
+      
+      // iOS에서 파일 앱에서 보이도록 PDFXcel 폴더 생성
+      Directory pdfxcelFolder;
+      if (Platform.isIOS) {
+        pdfxcelFolder = Directory('${directory.path}/PDFXcel');
+        if (!await pdfxcelFolder.exists()) {
+          await pdfxcelFolder.create(recursive: true);
+          debugPrint('📁 PDFXcel 폴더 생성: ${pdfxcelFolder.path}');
+        }
+      } else {
+        // Android는 기본 Documents 폴더 사용
+        pdfxcelFolder = directory;
+      }
+      
       // 원본 파일명 가져오기
       String filename = 'PDFxcel_${fileId}_${DateTime.now().millisecondsSinceEpoch}.xlsx'; // 기본값
       try {
@@ -359,15 +364,15 @@ class ApiService {
                 : cleanName;
             
             filename = '${truncatedName}_변환됨.xlsx';
-            print('📋 원본 파일명 사용: $originalFilename -> $filename');
+            debugPrint('📋 원본 파일명 사용: $originalFilename -> $filename');
           }
         }
       } catch (e) {
-        print('⚠️ 원본 파일명 가져오기 실패, 기본 파일명 사용: $e');
+        debugPrint('⚠️ 원본 파일명 가져오기 실패, 기본 파일명 사용: $e');
       }
-      final savePath = '${directory.path}/$filename';
+      final savePath = '${pdfxcelFolder.path}/$filename';
 
-      print('📥 다운로드 URL: $_baseUrl/download/$fileId');
+      debugPrint('📥 다운로드 URL: $_baseUrl/download/$fileId');
       
       // 파일 다운로드
       final response = await _dio.download(
@@ -380,7 +385,7 @@ class ApiService {
         ),
       );
 
-      print('📥 다운로드 응답: ${response.statusCode}');
+      debugPrint('📥 다운로드 응답: ${response.statusCode}');
       
       if (response.statusCode != 200) {
         throw _createApiError(
@@ -402,12 +407,12 @@ class ApiService {
         );
       }
       
-      print('✅ 다운로드 성공: $savePath');
+      debugPrint('✅ 다운로드 성공: $savePath');
       return savePath;
 
     } catch (error) {
       if (error is ApiError) {
-        throw error;
+        rethrow;
       }
       throw _createApiError(error, 'downloadExcel');
     }
@@ -416,13 +421,13 @@ class ApiService {
   // 파일 삭제
   Future<void> deleteFile(String fileId) async {
     try {
-      print('🗑️ 파일 삭제 시작: $fileId');
+      debugPrint('🗑️ 파일 삭제 시작: $fileId');
       
       await _dio.delete('/download/$fileId');
       
-      print('✅ 파일 삭제 성공: $fileId');
+      debugPrint('✅ 파일 삭제 성공: $fileId');
     } catch (error) {
-      print('Delete error: $error');
+      debugPrint('Delete error: $error');
       // 삭제 실패는 치명적이지 않으므로 에러를 던지지 않음
     }
   }
@@ -430,7 +435,7 @@ class ApiService {
   // 테이블 미리보기 (변환된 데이터에서 생성)
   Future<TablePreviewData> getTablePreview(String fileId) async {
     try {
-      print('📊 테이블 미리보기 생성 시작: $fileId');
+      debugPrint('📊 테이블 미리보기 생성 시작: $fileId');
       
       // 변환된 데이터 가져오기
       final convertedData = await getConvertedData(fileId);
@@ -481,12 +486,12 @@ class ApiService {
         totalColumns: headers.length,
       );
       
-      print('✅ 테이블 미리보기 생성 완료: ${preview.totalRows}행 ${preview.totalColumns}열');
+      debugPrint('✅ 테이블 미리보기 생성 완료: ${preview.totalRows}행 ${preview.totalColumns}열');
       return preview;
       
     } catch (error) {
       if (error is ApiError) {
-        throw error;
+        rethrow;
       }
       throw _createApiError(error, 'getTablePreview');
     }
@@ -495,7 +500,7 @@ class ApiService {
   // 변환 상태 확인
   Future<Map<String, dynamic>> getConversionStatus(String fileId) async {
     try {
-      print('🔍 변환 상태 확인 시작: $fileId');
+      debugPrint('🔍 변환 상태 확인 시작: $fileId');
       
       final response = await _dio.get('/status/$fileId');
       
@@ -511,7 +516,7 @@ class ApiService {
       }
       
       final status = response.data as Map<String, dynamic>;
-      print('🔍 원본 응답: $status');
+      debugPrint('🔍 원본 응답: $status');
       
       // 응답 구조에 따라 다르게 처리
       String? taskStatus;
@@ -535,16 +540,16 @@ class ApiService {
           message = 'Unknown response format';
         }
       } catch (castError) {
-        print('❌ 응답 파싱 에러: $castError');
-        print('❌ 문제가 되는 status 필드: ${status['status']}');
-        print('❌ 문제가 되는 message 필드: ${status['message']}');
+        debugPrint('❌ 응답 파싱 에러: $castError');
+        debugPrint('❌ 문제가 되는 status 필드: ${status['status']}');
+        debugPrint('❌ 문제가 되는 message 필드: ${status['message']}');
         
         // 안전한 fallback
         taskStatus = 'unknown';
         message = 'Response parsing error';
       }
       
-      print('📊 변환 상태: $taskStatus - $message');
+      debugPrint('📊 변환 상태: $taskStatus - $message');
       
       // 표준화된 응답 형태로 반환
       return {
@@ -554,7 +559,7 @@ class ApiService {
       };
     } catch (error) {
       if (error is ApiError) {
-        throw error;
+        rethrow;
       }
       throw _createApiError(error, 'getConversionStatus');
     }
@@ -563,7 +568,7 @@ class ApiService {
   // 히스토리에서 파일 정보 확인
   Future<Map<String, dynamic>?> getFileHistory(String fileId) async {
     try {
-      print('📋 파일 히스토리 확인: $fileId');
+      debugPrint('📋 파일 히스토리 확인: $fileId');
       
       final sessionId = await _getSessionId();
       final response = await _dio.get(
@@ -576,13 +581,13 @@ class ApiService {
       );
       
       if (response.statusCode == 200) {
-        print('📋 히스토리 찾음: ${response.data}');
+        debugPrint('📋 히스토리 찾음: ${response.data}');
         return response.data as Map<String, dynamic>;
       }
       
       return null;
     } catch (error) {
-      print('📋 히스토리 확인 실패: $error');
+      debugPrint('📋 히스토리 확인 실패: $error');
       return null;
     }
   }
@@ -590,11 +595,11 @@ class ApiService {
   // 변환된 데이터 조회
   Future<List<dynamic>> getConvertedData(String fileId) async {
     try {
-      print('📊 변환된 데이터 조회 시작: $fileId');
+      debugPrint('📊 변환된 데이터 조회 시작: $fileId');
       
       // 세션 ID 가져오기
       final sessionId = await _getSessionId();
-      print('🔍 세션 ID: $sessionId');
+      debugPrint('🔍 세션 ID: $sessionId');
       
       final response = await _dio.get(
         '/data/$fileId',
@@ -626,12 +631,12 @@ class ApiService {
         );
       }
       
-      print('✅ 변환된 데이터 조회 성공: ${data.length}개의 레코드');
+      debugPrint('✅ 변환된 데이터 조회 성공: ${data.length}개의 레코드');
       return data;
       
     } catch (error) {
       if (error is ApiError) {
-        throw error;
+        rethrow;
       }
       throw _createApiError(error, 'getConvertedData');
     }
@@ -653,7 +658,7 @@ class ApiService {
   // 히스토리 조회
   Future<HistoryResponse> getHistory() async {
     try {
-      print('📋 히스토리 조회 시작');
+      debugPrint('📋 히스토리 조회 시작');
       
       final sessionId = await _getSessionId();
       
@@ -679,12 +684,12 @@ class ApiService {
       
       final historyResponse = HistoryResponse.fromJson(response.data);
       
-      print('✅ 히스토리 조회 성공: ${historyResponse.files.length}개 파일');
+      debugPrint('✅ 히스토리 조회 성공: ${historyResponse.files.length}개 파일');
       return historyResponse;
       
     } catch (error) {
       if (error is ApiError) {
-        throw error;
+        rethrow;
       }
       throw _createApiError(error, 'getHistory');
     }
@@ -693,7 +698,7 @@ class ApiService {
   // 히스토리에서 파일 삭제
   Future<void> deleteFileFromHistory(String fileId) async {
     try {
-      print('🗑️ 히스토리에서 파일 삭제: $fileId');
+      debugPrint('🗑️ 히스토리에서 파일 삭제: $fileId');
       
       final sessionId = await _getSessionId();
       
@@ -717,11 +722,11 @@ class ApiService {
         );
       }
       
-      print('✅ 히스토리에서 파일 삭제 성공: $fileId');
+      debugPrint('✅ 히스토리에서 파일 삭제 성공: $fileId');
       
     } catch (error) {
       if (error is ApiError) {
-        throw error;
+        rethrow;
       }
       throw _createApiError(error, 'deleteFileFromHistory');
     }
@@ -730,7 +735,7 @@ class ApiService {
   // 세션 통계 조회
   Future<Map<String, dynamic>> getSessionStats() async {
     try {
-      print('📊 세션 통계 조회 시작');
+      debugPrint('📊 세션 통계 조회 시작');
       
       final sessionId = await _getSessionId();
       
@@ -756,12 +761,12 @@ class ApiService {
       
       final stats = response.data['stats'] as Map<String, dynamic>;
       
-      print('✅ 세션 통계 조회 성공: $stats');
+      debugPrint('✅ 세션 통계 조회 성공: $stats');
       return stats;
       
     } catch (error) {
       if (error is ApiError) {
-        throw error;
+        rethrow;
       }
       throw _createApiError(error, 'getSessionStats');
     }

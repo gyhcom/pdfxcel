@@ -16,25 +16,25 @@ class AdMobService {
   // AdMob App ID (실제 프로덕션 ID) - Info.plist에서 사용
 
   static const Map<String, String> _adUnitIds = {
-    // 개발/테스트용 - 실제 기기에서는 실제 ID 사용
-    'rewarded_ios': kDebugMode 
-        ? 'ca-app-pub-3940256099942544/1712485313' // 테스트 ID
-        : 'ca-app-pub-4940948867704473/9569500075', // 실제 pdfxcel_reward
-    'rewarded_android': kDebugMode 
-        ? 'ca-app-pub-3940256099942544/5224354917' // 테스트 ID  
-        : 'ca-app-pub-4940948867704473/9569500075',
-    'interstitial_ios': kDebugMode 
-        ? 'ca-app-pub-3940256099942544/4411468910' // 테스트 ID
-        : 'ca-app-pub-4940948867704473/3804175689', // 실제 pdfxcel_ai
-    'interstitial_android': kDebugMode 
-        ? 'ca-app-pub-3940256099942544/1033173712' // 테스트 ID
-        : 'ca-app-pub-4940948867704473/3804175689',
-    'banner_ios': kDebugMode 
-        ? 'ca-app-pub-3940256099942544/2934735716' // 테스트 ID
-        : 'ca-app-pub-4940948867704473/5085467763', // 실제 pdfxcel_banner
-    'banner_android': kDebugMode 
-        ? 'ca-app-pub-3940256099942544/6300978111' // 테스트 ID
-        : 'ca-app-pub-4940948867704473/5085467763',
+    // 프로덕션용 실제 광고 ID 사용 (kReleaseMode 기준)
+    'rewarded_ios': kReleaseMode 
+        ? 'ca-app-pub-4940948867704473/9569500075' // 실제 pdfxcel_reward
+        : 'ca-app-pub-3940256099942544/1712485313', // 테스트 ID
+    'rewarded_android': kReleaseMode 
+        ? 'ca-app-pub-4940948867704473/9569500075'
+        : 'ca-app-pub-3940256099942544/5224354917', // 테스트 ID  
+    'interstitial_ios': kReleaseMode 
+        ? 'ca-app-pub-4940948867704473/3804175689' // 실제 pdfxcel_ai
+        : 'ca-app-pub-3940256099942544/4411468910', // 테스트 ID
+    'interstitial_android': kReleaseMode 
+        ? 'ca-app-pub-4940948867704473/3804175689'
+        : 'ca-app-pub-3940256099942544/1033173712', // 테스트 ID
+    'banner_ios': kReleaseMode 
+        ? 'ca-app-pub-4940948867704473/5085467763' // 실제 pdfxcel_banner
+        : 'ca-app-pub-3940256099942544/2934735716', // 테스트 ID
+    'banner_android': kReleaseMode 
+        ? 'ca-app-pub-4940948867704473/5085467763'
+        : 'ca-app-pub-3940256099942544/6300978111', // 테스트 ID
   };
 
   // Getter for ad unit IDs

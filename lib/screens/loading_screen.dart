@@ -38,10 +38,22 @@ class LoadingScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: Icon(
-                        Icons.picture_as_pdf_rounded,
-                        size: 60,
-                        color: Theme.of(context).colorScheme.primary,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Image.asset(
+                          'assets/splash.png',
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            // 이미지 로드 실패 시 기본 아이콘 표시
+                            return Icon(
+                              Icons.picture_as_pdf_rounded,
+                              size: 60,
+                              color: Theme.of(context).colorScheme.primary,
+                            );
+                          },
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),

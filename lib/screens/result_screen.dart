@@ -57,7 +57,7 @@ class _ResultScreenState extends State<ResultScreen> {
         
         if (history != null && history['file'] != null) {
           historyStatus = history['file']['status'] as String?;
-          print('📋 히스토리 상태: $historyStatus');
+          debugPrint('📋 히스토리 상태: $historyStatus');
         }
         
         // 상태 API도 확인
@@ -75,7 +75,7 @@ class _ResultScreenState extends State<ResultScreen> {
           _statusMessage = finalMessage;
         });
         
-        print('🔄 최종 상태: $finalStatus (히스토리: $historyStatus, API: $apiStatus)');
+        debugPrint('🔄 최종 상태: $finalStatus (히스토리: $historyStatus, API: $apiStatus)');
         
         if (_conversionStatus == 'completed') {
           // 변환 완료 - 미리보기 로드
@@ -100,7 +100,7 @@ class _ResultScreenState extends State<ResultScreen> {
         
         // 상태에 따라 대기 시간 조정
         int waitTime = _conversionStatus == 'processing' ? 5 : 3; // processing일 때는 더 오래 대기
-        print('⏳ ${retryCount + 1}/${maxRetries} - $_conversionStatus 상태로 ${waitTime}초 대기...');
+        debugPrint('⏳ ${retryCount + 1}/$maxRetries - $_conversionStatus 상태로 $waitTime초 대기...');
         
         // 사용자에게 진행 상황 업데이트
         if (_conversionStatus == 'processing' && retryCount > 5) {
@@ -113,14 +113,14 @@ class _ResultScreenState extends State<ResultScreen> {
         retryCount++;
         
       } catch (error) {
-        print('상태 확인 실패: $error');
+        debugPrint('상태 확인 실패: $error');
         
         // 상태 API 실패 시 히스토리로 확인
         try {
           final history = await apiService.getFileHistory(widget.fileId);
           if (history != null && history['file'] != null) {
             final fileStatus = history['file']['status'] as String?;
-            print('📋 히스토리에서 확인한 상태: $fileStatus');
+            debugPrint('📋 히스토리에서 확인한 상태: $fileStatus');
             
             if (fileStatus == 'completed') {
               await _loadPreview();
@@ -135,12 +135,12 @@ class _ResultScreenState extends State<ResultScreen> {
             }
           }
         } catch (historyError) {
-          print('📋 히스토리 확인 실패: $historyError');
+          debugPrint('📋 히스토리 확인 실패: $historyError');
         }
         
         if (retryCount > 5) {
           // 5회 이상 실패 시 직접 미리보기 시도
-          print('🔄 상태 확인 실패가 계속되어 직접 미리보기 시도');
+          debugPrint('🔄 상태 확인 실패가 계속되어 직접 미리보기 시도');
           await _loadPreview();
           break;
         }
@@ -162,7 +162,7 @@ class _ResultScreenState extends State<ResultScreen> {
           }
         }
       } catch (e) {
-        print('최종 히스토리 확인 실패: $e');
+        debugPrint('최종 히스토리 확인 실패: $e');
       }
       
       setState(() {
@@ -211,14 +211,37 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: Text(widget.useAi ? 'AI 변환 결과' : '변환 결과'),
+        title: Text(
+          widget.useAi ? 'AI 변환 결과' : '변환 결과',
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          style: IconButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
         actions: [
           if (_downloadedFilePath != null)
-            IconButton(
-              onPressed: _shareFile,
-              icon: const Icon(Icons.share),
-              tooltip: '공유',
+            Container(
+              margin: const EdgeInsets.only(right: 16),
+              child: IconButton.filled(
+                onPressed: _shareFile,
+                icon: const Icon(Icons.share_rounded, size: 20),
+                tooltip: '공유',
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.all(12),
+                ),
+              ),
             ),
         ],
       ),
@@ -231,7 +254,7 @@ class _ResultScreenState extends State<ResultScreen> {
             // 메인 컨텐츠 (스크롤 가능)
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: _isLoadingPreview
                     ? _buildLoadingState()
                     : _previewData != null
@@ -244,19 +267,24 @@ class _ResultScreenState extends State<ResultScreen> {
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, -2),
-                    blurRadius: 4,
+                    color: Colors.black.withValues(alpha: 0.08),
+                    offset: const Offset(0, -4),
+                    blurRadius: 16,
                   ),
                 ],
               ),
               child: Padding(
                 padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).padding.bottom > 0 
-                    ? MediaQuery.of(context).padding.bottom 
-                    : 16,
+                  left: 20,
+                  right: 20,
+                  top: 20,
+                  bottom: MediaQuery.of(context).padding.bottom + 20,
                 ),
                 child: _buildDownloadSection(),
               ),
@@ -270,100 +298,115 @@ class _ResultScreenState extends State<ResultScreen> {
   Widget _buildStatusHeader() {
     IconData icon;
     Color backgroundColor;
-    Color borderColor;
     Color iconColor;
     String title;
     
     switch (_conversionStatus) {
       case 'completed':
-        icon = Icons.check_circle;
-        backgroundColor = Colors.green[50]!;
-        borderColor = Colors.green[200]!;
-        iconColor = Colors.green[600]!;
+        icon = Icons.check_circle_rounded;
+        backgroundColor = const Color(0xFF10B981);
+        iconColor = Colors.white;
         title = 'AI 변환 완료!';
         break;
       case 'processing':
       case 'queued':
-        icon = Icons.autorenew;
-        backgroundColor = Colors.blue[50]!;
-        borderColor = Colors.blue[200]!;
-        iconColor = Colors.blue[600]!;
+        icon = Icons.autorenew_rounded;
+        backgroundColor = Theme.of(context).colorScheme.primary;
+        iconColor = Colors.white;
         title = 'AI 변환 중...';
         break;
       case 'failed':
       case 'error':
       case 'not_found':
-        icon = Icons.error;
-        backgroundColor = Colors.red[50]!;
-        borderColor = Colors.red[200]!;
-        iconColor = Colors.red[600]!;
+        icon = Icons.error_rounded;
+        backgroundColor = const Color(0xFFEF4444);
+        iconColor = Colors.white;
         title = _conversionStatus == 'not_found' ? '변환 작업 중단됨' : '변환 실패';
         break;
       case 'running':
-        icon = Icons.autorenew;
-        backgroundColor = Colors.blue[50]!;
-        borderColor = Colors.blue[200]!;
-        iconColor = Colors.blue[600]!;
+        icon = Icons.autorenew_rounded;
+        backgroundColor = Theme.of(context).colorScheme.primary;
+        iconColor = Colors.white;
         title = 'AI 변환 진행 중...';
         break;
       case 'timeout':
-        icon = Icons.access_time;
-        backgroundColor = Colors.orange[50]!;
-        borderColor = Colors.orange[200]!;
-        iconColor = Colors.orange[600]!;
+        icon = Icons.access_time_rounded;
+        backgroundColor = const Color(0xFFF59E0B);
+        iconColor = Colors.white;
         title = 'AI 변환 시간 초과';
         break;
       default:
-        icon = Icons.help;
-        backgroundColor = Colors.orange[50]!;
-        borderColor = Colors.orange[200]!;
-        iconColor = Colors.orange[600]!;
+        icon = Icons.help_rounded;
+        backgroundColor = const Color(0xFFF59E0B);
+        iconColor = Colors.white;
         title = '상태 확인 중...';
     }
     
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border(
-          bottom: BorderSide(color: borderColor),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            backgroundColor,
+            backgroundColor.withValues(alpha: 0.8),
+          ],
         ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: backgroundColor.withValues(alpha: 0.3),
+            offset: const Offset(0, 8),
+            blurRadius: 24,
+          ),
+        ],
       ),
       child: Row(
         children: [
-          _conversionStatus == 'processing' || _conversionStatus == 'queued'
-              ? SizedBox(
-                  width: 32,
-                  height: 32,
-                  child: CircularProgressIndicator(
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: _conversionStatus == 'processing' || _conversionStatus == 'queued'
+                ? SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: CircularProgressIndicator(
+                      color: iconColor,
+                      strokeWidth: 3,
+                    ),
+                  )
+                : Icon(
+                    icon,
                     color: iconColor,
-                    strokeWidth: 3,
+                    size: 32,
                   ),
-                )
-              : Icon(
-                  icon,
-                  color: iconColor,
-                  size: 32,
-                ),
-          const SizedBox(width: 16),
+          ),
+          const SizedBox(width: 20),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 18,
+                  style: const TextStyle(
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: iconColor,
+                    color: Colors.white,
                   ),
                 ),
+                const SizedBox(height: 6),
                 Text(
                   _statusMessage,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: iconColor,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -659,130 +702,177 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Widget _buildDownloadSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (_downloadedFilePath != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green[200]!),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_downloadedFilePath != null) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                width: 1,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Icon(Icons.download_done, color: Colors.green[600]),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          '파일이 다운로드되었습니다',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w500,
-                            height: 1.2,
-                          ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.download_done_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        '파일이 다운로드되었습니다',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF10B981),
                         ),
                       ),
-                      TextButton(
-                        onPressed: _showFileLocationHelp,
-                        child: const Text('도움말'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.folder_rounded,
+                            size: 18,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '저장 위치',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
                       ),
-                      TextButton(
-                        onPressed: _openFile,
-                        child: Text(Platform.isIOS ? '공유하기' : '열기'),
+                      const SizedBox(height: 8),
+                      Text(
+                        Platform.isIOS
+                            ? '파일 앱 > 내 iPhone > PDFXcel > PDFXcel'
+                            : '내부 저장소 > Documents',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '파일명: ${_downloadedFilePath!.split('/').last}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontFamily: 'monospace',
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: Colors.green[200]!),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Icon(Icons.folder, size: 16, color: Colors.grey[600]),
-                            const SizedBox(width: 4),
-                            Text(
-                              '저장 위치:',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[700],
-                                height: 1.2,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          Platform.isIOS
-                              ? '파일 앱 > 내 iPhone > PDFXcel'
-                              : '내부 저장소 > Documents',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _showFileLocationHelp,
+                        icon: const Icon(Icons.help_outline_rounded, size: 18),
+                        label: const Text('도움말'),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: const Color(0xFF10B981).withValues(alpha: 0.3),
                           ),
+                          foregroundColor: const Color(0xFF10B981),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '파일명: ${_downloadedFilePath!.split('/').last}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: _isDownloading ? null : _downloadFile,
-              icon: _isDownloading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.download),
-              label: Text(
-                _isDownloading ? '다운로드 중...' : 'Excel 파일 다운로드',
-                style: const TextStyle(fontSize: 14),
-                overflow: TextOverflow.ellipsis,
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-              ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: _openFile,
+                        icon: Icon(
+                          Platform.isIOS ? Icons.share_rounded : Icons.open_in_new_rounded,
+                          size: 18,
+                        ),
+                        label: Text(Platform.isIOS ? '공유하기' : '열기'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
+          const SizedBox(height: 20),
         ],
-      ),
+        
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: FilledButton.icon(
+            onPressed: _isDownloading ? null : _downloadFile,
+            icon: _isDownloading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.download_rounded, size: 20),
+            label: Text(
+              _isDownloading ? '다운로드 중...' : 'Excel 파일 다운로드',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.grey[300],
+              disabledForegroundColor: Colors.grey[600],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -813,7 +903,7 @@ class _ResultScreenState extends State<ResultScreen> {
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('파일 앱 > 내 iPhone > PDFXcel에서 확인할 수 있습니다'),
+                    content: Text('파일 앱 > 내 iPhone > PDFXcel > PDFXcel 폴더에서 확인할 수 있습니다'),
                     backgroundColor: Colors.blue,
                   ),
                 );
@@ -936,7 +1026,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text("1. \"파일\" 앱을 열어주세요"),
-                const Text("2. \"내 iPhone\" > \"PDFXcel\" 폴더로 이동"),
+                const Text("2. \"내 iPhone\" > \"PDFXcel\" > \"PDFXcel\" 폴더로 이동"),
                 const Text("3. 다운로드된 Excel 파일을 확인하세요"),
                 const SizedBox(height: 12),
                 const Text(
