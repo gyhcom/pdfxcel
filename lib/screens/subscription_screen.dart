@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:provider/provider.dart';
-import '../providers/app_state_provider.dart';
 import '../services/purchase_service.dart';
+import '../providers/app_state_provider.dart';
 
 class SubscriptionScreen extends StatefulWidget {
   const SubscriptionScreen({super.key});
@@ -23,16 +24,23 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   Future<void> _loadSubscriptionPlans() async {
     try {
-      final products = await purchaseService.getProducts();
+      // 더 긴 시간을 주고 여러 번 시도
+      final products = await _retryGetProducts();
       
       if (products != null && products.isNotEmpty) {
+        final subscriptionPlans = purchaseService.parseSubscriptionPlans(products);
         setState(() {
-          _plans = purchaseService.parseSubscriptionPlans(products);
+          _plans = subscriptionPlans;
           _isLoading = false;
         });
+        debugPrint('✅ 실제 상품 로드 성공: ${products.length}개');
+        debugPrint('✅ 구독 플랜 파싱 결과: ${subscriptionPlans.length}개');
+        for (final plan in subscriptionPlans) {
+          debugPrint('   - ${plan.id}: ${plan.title} (${plan.price})');
+        }
       } else {
-        // 실제 상품을 불러올 수 없으면 Mock 데이터 사용 (개발/테스트용)
-        debugPrint('🔄 실제 상품을 불러올 수 없어 Mock 데이터 사용');
+        // 실제 상품을 불러올 수 없는 경우 - 스크린샷용 Mock 데이터 사용
+        debugPrint('❌ 실제 상품을 불러올 수 없음 - Mock 데이터 사용');
         setState(() {
           _plans = _getMockSubscriptionPlans();
           _isLoading = false;
@@ -41,64 +49,84 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('⚠️ 데모 모드: 실제 구매는 불가능합니다'),
-              backgroundColor: Colors.orange,
+              content: Text('인앱결제 상품을 불러올 수 없습니다. 잠시 후 다시 시도해주세요.'),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 5),
             ),
           );
         }
       }
     } catch (error) {
       debugPrint('❌ 구독 상품 로드 에러: $error');
-      // 에러 발생 시에도 Mock 데이터 표시
       setState(() {
-        _plans = _getMockSubscriptionPlans();
+        _plans = [];
         _isLoading = false;
       });
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('⚠️ 데모 모드: 네트워크 오류로 인해 실제 구매 불가'),
-            backgroundColor: Colors.orange,
+          SnackBar(
+            content: Text('구독 상품 로드 실패: $error'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
     }
   }
 
-  // Mock 구독 상품 생성 (개발/테스트용)
+  // 재시도 로직으로 상품 로드
+  Future<List<ProductDetails>?> _retryGetProducts() async {
+    const maxRetries = 3;
+    const retryDelay = Duration(seconds: 2);
+    
+    for (int i = 0; i < maxRetries; i++) {
+      debugPrint('🔄 상품 로드 시도 ${i + 1}/$maxRetries');
+      
+      try {
+        final products = await purchaseService.getProducts();
+        if (products != null && products.isNotEmpty) {
+          return products;
+        }
+        
+        if (i < maxRetries - 1) {
+          debugPrint('⏳ ${retryDelay.inSeconds}초 후 재시도...');
+          await Future.delayed(retryDelay);
+        }
+      } catch (error) {
+        debugPrint('❌ 시도 ${i + 1} 실패: $error');
+        if (i < maxRetries - 1) {
+          await Future.delayed(retryDelay);
+        }
+      }
+    }
+    
+    return null;
+  }
+
+  // 스크린샷용 Mock 구독 플랜 (실제 App Store Connect 가격)
   List<SubscriptionPlan> _getMockSubscriptionPlans() {
     return [
       SubscriptionPlan(
         id: 'com.pdfxcel.mobile.Annual',
         title: 'PRO 연간 구독',
-        description: '무제한 변환 + 광고 제거 + 60% 할인',
-        price: '₩29,000',
+        description: '무제한 변환 + 광고 제거 + 월 \$3.33',
+        price: '\$39.99',
         period: '년',
         isPopular: true,
-        productDetails: null, // Mock용으로 null 설정
+        productDetails: null,
       ),
       SubscriptionPlan(
         id: 'com.pdfxcel.mobile.Monthly',
         title: 'PRO 월간 구독',
         description: '무제한 변환 + 광고 제거',
-        price: '₩4,900',
+        price: '\$4.99',
         period: '월',
         isPopular: false,
-        productDetails: null, // Mock용으로 null 설정
-      ),
-      SubscriptionPlan(
-        id: 'com.pdfxcel.mobile.Lifetime',
-        title: 'PRO 평생 이용권',
-        description: '한번 구매로 평생 무제한 이용',
-        price: '₩99,000',
-        period: '평생',
-        isPopular: false,
-        productDetails: null, // Mock용으로 null 설정
+        productDetails: null,
       ),
     ];
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +151,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                   _buildHeader(),
                   const SizedBox(height: 32),
                   
+                  // 1회 변환권 옵션
+                  _buildOneTimeSection(),
+                  const SizedBox(height: 32),
+                  
                   // 구독 플랜들
                   if (_plans.isNotEmpty) ...[
                     const Text(
@@ -135,10 +167,47 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                     const SizedBox(height: 16),
                     ..._plans.map((plan) => _buildPlanCard(plan)),
                   ] else ...[
-                    const Center(
-                      child: Text(
-                        '현재 사용 가능한 구독 플랜이 없습니다.',
-                        style: TextStyle(fontSize: 16),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade50,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.shade200),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.warning_rounded,
+                            color: Colors.orange.shade600,
+                            size: 48,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            '구독 플랜을 불러올 수 없습니다',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'App Store Connect 설정을 확인하거나\n잠시 후 다시 시도해주세요.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              setState(() => _isLoading = true);
+                              _loadSubscriptionPlans();
+                            },
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('다시 시도'),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -150,6 +219,141 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildOneTimeSection() {
+    debugPrint('🎯 1회 변환권 섹션 빌드 중...');
+    return Consumer<AppStateProvider>(
+      builder: (context, appState, child) {
+        debugPrint('🎯 현재 1회 변환권 보유: ${appState.oneTimeCredits}개');
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '빠른 구매',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B5CF6),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.payment_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'AI 변환 1회권',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '\$0.99 - 고품질 AI 변환을 1회 이용',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '보유: ${appState.oneTimeCredits}개',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Color(0xFF8B5CF6), size: 16),
+                      SizedBox(width: 8),
+                      Text('광고 없는 고품질 변환', style: TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Row(
+                    children: [
+                      Icon(Icons.check_circle, color: Color(0xFF8B5CF6), size: 16),
+                      SizedBox(width: 8),
+                      Text('영구 보관 (만료 없음)', style: TextStyle(fontSize: 14)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: _isPurchasing ? null : () {
+                        debugPrint('🎯 1회 변환권 구매 버튼 클릭됨');
+                        _purchaseOneTimeCredits();
+                      },
+                      icon: _isPurchasing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.shopping_cart_rounded, size: 18),
+                      label: Text(
+                        _isPurchasing ? '구매 중...' : '1회 변환권 구매',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B5CF6),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -343,42 +547,32 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     });
 
     try {
-      // Mock 데이터인 경우 (productDetails가 null)
+      // Mock 데이터인 경우 (스크린샷용)
       if (plan.productDetails == null) {
         // Mock 구매 시뮬레이션
         await Future.delayed(const Duration(seconds: 2));
-        
         if (mounted) {
-          // Mock PRO 활성화
-          final appState = Provider.of<AppStateProvider>(context, listen: false);
-          await appState.setProUser(true);
-          
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('🎉 ${plan.title} 구매 완료! (데모 모드)'),
-                backgroundColor: Colors.green,
-              ),
-            );
-            
-            Navigator.pop(context);
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🎬 스크린샷 모드: 실제 구매는 TestFlight에서 가능합니다'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 3),
+            ),
+          );
         }
         return;
       }
-
-      // 실제 구매 처리
-      if (plan.productDetails == null) {
-        throw Exception('상품 정보를 불러올 수 없습니다.');
-      }
+      
+      debugPrint('🛒 구매 시작: ${plan.id}');
       final result = await purchaseService.purchaseProduct(plan.productDetails!);
       
       if (result['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('🛒 구매 요청이 전송되었습니다. 잠시 후 확인해주세요.'),
+              content: Text('🛒 구매 요청이 전송되었습니다. 결제 완료를 기다려주세요.'),
               backgroundColor: Colors.blue,
+              duration: Duration(seconds: 3),
             ),
           );
         }
@@ -388,44 +582,166 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             SnackBar(
               content: Text(result['error'] ?? '구매에 실패했습니다.'),
               backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
             ),
           );
         }
       }
     } catch (error) {
+      debugPrint('❌ 구매 오류: $error');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('구매 오류: $error'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
     } finally {
-      setState(() {
-        _isPurchasing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isPurchasing = false;
+        });
+      }
+    }
+  }
+
+  // 1회 변환권 구매
+  Future<void> _purchaseOneTimeCredits() async {
+    debugPrint('🛒 1회 변환권 구매 시작...');
+    setState(() => _isPurchasing = true);
+
+    try {
+      final products = await purchaseService.getProducts();
+      debugPrint('🛒 로드된 상품 수: ${products?.length ?? 0}');
+      
+      // 상품을 불러올 수 없는 경우 Mock 구매 처리 (스크린샷용)
+      if (products == null || products.isEmpty) {
+        await Future.delayed(const Duration(seconds: 2));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('🎬 스크린샷 모드: 실제 구매는 TestFlight에서 가능합니다'),
+              backgroundColor: Colors.blue,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+      
+      for (final product in products) {
+        debugPrint('🛒 상품: ${product.id} - ${product.title} - ${product.price}');
+      }
+
+      // OneTimeAI 상품 찾기
+      final oneTimeProduct = products.firstWhere(
+        (product) => product.id == 'com.pdfxcel.mobile.OneTimeAI',
+        orElse: () {
+          debugPrint('❌ OneTimeAI 상품을 찾을 수 없음. 사용 가능한 상품들:');
+          for (final product in products) {
+            debugPrint('   - ${product.id}');
+          }
+          return throw Exception('1회 변환권 상품을 찾을 수 없습니다.');
+        },
+      );
+      
+      debugPrint('✅ 1회 변환권 상품 찾음: ${oneTimeProduct.id} - ${oneTimeProduct.price}');
+
+      final result = await purchaseService.purchaseProduct(oneTimeProduct);
+
+      if (mounted) {
+        if (result['success']) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 12),
+                  Text('1회 변환권 구매가 완료되었습니다!'),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          
+          // 상태 새로고침
+          final appState = Provider.of<AppStateProvider>(context, listen: false);
+          await appState.refreshAll();
+        } else {
+          throw Exception(result['error'] ?? '구매에 실패했습니다.');
+        }
+      }
+    } catch (error) {
+      debugPrint('1회 변환권 구매 실패: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('구매 중 오류가 발생했습니다: $error')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isPurchasing = false);
+      }
     }
   }
 
   Future<void> _restorePurchases() async {
     try {
+      debugPrint('🔄 구매 복원 시작...');
       final result = await purchaseService.restorePurchases();
       
+      // 구매 복원 후 앱 상태 새로고침
+      debugPrint('🔄 구매 복원 후 앱 상태 새로고침...');
       if (mounted) {
+        final appState = Provider.of<AppStateProvider>(context, listen: false);
+        await appState.refreshAll();
+      }
+      
+      if (mounted) {
+        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message'] ?? '구매 복원 요청이 완료되었습니다.'),
-            backgroundColor: Colors.blue,
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(result['message'] ?? '구매 복원이 완료되었습니다.'),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     } catch (error) {
+      debugPrint('❌ 구매 복원 실패: $error');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('복원 오류: $error'),
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('복원 오류: $error')),
+              ],
+            ),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
