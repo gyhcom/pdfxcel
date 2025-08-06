@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import 'services/admob_service.dart';
 import 'services/purchase_service.dart';
 import 'providers/app_state_provider.dart';
+import 'providers/language_provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/loading_screen.dart';
 
@@ -83,11 +86,24 @@ class PDFXcelApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AppStateProvider(),
-      child: MaterialApp(
-        title: 'PDFXcel',
-        debugShowCheckedModeBanner: false,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => LanguageProvider()),
+        ChangeNotifierProvider(create: (context) => AppStateProvider()),
+      ],
+      child: Consumer<LanguageProvider>(
+        builder: (context, languageProvider, child) {
+          return MaterialApp(
+            title: 'PDFXcel',
+            debugShowCheckedModeBanner: false,
+            locale: languageProvider.locale,
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: LanguageProvider.supportedLocales,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF7C6AFF), // 아이콘의 보라색과 일치
@@ -324,7 +340,9 @@ class PDFXcelApp extends StatelessWidget {
             space: 1,
           ),
         ),
-        home: const AppInitializer(),
+            home: const AppInitializer(),
+          );
+        },
       ),
     );
   }

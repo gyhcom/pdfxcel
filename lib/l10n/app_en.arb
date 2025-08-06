@@ -1,0 +1,261 @@
+{
+  "appTitle": "PDFXcel",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  
+  "homeTitle": "PDF to Excel Converter",
+  "@homeTitle": {
+    "description": "Main page title"
+  },
+  
+  "selectPdfFile": "Select PDF File",
+  "@selectPdfFile": {
+    "description": "Button text for selecting PDF file"
+  },
+  
+  "convertNow": "Convert Now",
+  "@convertNow": {
+    "description": "Button text for starting conversion"
+  },
+  
+  "aiConversion": "AI Conversion",
+  "@aiConversion": {
+    "description": "AI conversion option"
+  },
+  
+  "basicConversion": "Basic Conversion",
+  "@basicConversion": {
+    "description": "Basic conversion option"
+  },
+  
+  "proSubscription": "PRO Subscription",
+  "@proSubscription": {
+    "description": "PRO subscription title"
+  },
+  
+  "monthlyPlan": "Monthly Plan",
+  "@monthlyPlan": {
+    "description": "Monthly subscription plan"
+  },
+  
+  "annualPlan": "Annual Plan",
+  "@annualPlan": {
+    "description": "Annual subscription plan"
+  },
+  
+  "oneTimeCredit": "1-Time Credit",
+  "@oneTimeCredit": {
+    "description": "One-time conversion credit"
+  },
+  
+  "unlimitedConversions": "Unlimited conversions + Ad removal",
+  "@unlimitedConversions": {
+    "description": "PRO subscription benefits"
+  },
+  
+  "highQualityAiConversion": "High-quality AI conversion for 1 use",
+  "@highQualityAiConversion": {
+    "description": "One-time credit description"
+  },
+  
+  "purchaseOneTimeCredit": "Purchase 1-Time Credit",
+  "@purchaseOneTimeCredit": {
+    "description": "Button text for purchasing one-time credit"
+  },
+  
+  "restorePurchases": "Restore Purchases",
+  "@restorePurchases": {
+    "description": "Button text for restoring purchases"
+  },
+  
+  "converting": "Converting...",
+  "@converting": {
+    "description": "Conversion in progress text"
+  },
+  
+  "conversionComplete": "Conversion Complete!",
+  "@conversionComplete": {
+    "description": "Conversion success message"
+  },
+  
+  "conversionFailed": "Conversion Failed",
+  "@conversionFailed": {
+    "description": "Conversion error message"
+  },
+  
+  "downloadExcel": "Download Excel",
+  "@downloadExcel": {
+    "description": "Button text for downloading Excel file"
+  },
+  
+  "fileUploadGuidelines": "File Upload Guidelines",
+  "@fileUploadGuidelines": {
+    "description": "File upload dialog title"
+  },
+  
+  "supportedFormat": "Supported Format",
+  "@supportedFormat": {
+    "description": "Supported file format section"
+  },
+  
+  "pdfFilesOnly": "PDF files only",
+  "@pdfFilesOnly": {
+    "description": "Supported file format description"
+  },
+  
+  "fileSize": "File Size",
+  "@fileSize": {
+    "description": "File size limit section"
+  },
+  
+  "maxFileSize": "Maximum 50MB",
+  "@maxFileSize": {
+    "description": "Maximum file size description"
+  },
+  
+  "optimalFiles": "Optimal Files",
+  "@optimalFiles": {
+    "description": "Optimal file type section"
+  },
+  
+  "tablesAndData": "PDFs containing tables or data",
+  "@tablesAndData": {
+    "description": "Optimal file description"
+  },
+  
+  "privacy": "Privacy",
+  "@privacy": {
+    "description": "Privacy section"
+  },
+  
+  "removeSensitiveInfo": "Remove sensitive information before upload",
+  "@removeSensitiveInfo": {
+    "description": "Privacy guideline"
+  },
+  
+  "internetRequired": "Internet connection required",
+  "@internetRequired": {
+    "description": "Network requirement message"
+  },
+  
+  "aiServerRequired": "PDF conversion requires AI server",
+  "@aiServerRequired": {
+    "description": "AI server requirement description"
+  },
+  
+  "offlineMode": "Offline Mode • Internet connection required for PDF conversion",
+  "@offlineMode": {
+    "description": "Offline mode banner text"
+  },
+  
+  "availableOffline": "Available offline:",
+  "@availableOffline": {
+    "description": "Offline available actions title"
+  },
+  
+  "viewHistory": "View conversion history",
+  "@viewHistory": {
+    "description": "Offline action - view history"
+  },
+  
+  "downloadFiles": "Download previous files",
+  "@downloadFiles": {
+    "description": "Offline action - download files"
+  },
+  
+  "viewGuide": "View usage guide",
+  "@viewGuide": {
+    "description": "Offline action - view guide"
+  },
+  
+  "appSettings": "App settings",
+  "@appSettings": {
+    "description": "Offline action - app settings"
+  },
+  
+  "networkError": "Network Error",
+  "@networkError": {
+    "description": "Network error title"
+  },
+  
+  "checkConnection": "Please check your internet connection",
+  "@checkConnection": {
+    "description": "Network connection error message"
+  },
+  
+  "fileTooLarge": "File too large (max 50MB)",
+  "@fileTooLarge": {
+    "description": "File size error message"
+  },
+  
+  "invalidPdf": "This is not a valid PDF file",
+  "@invalidPdf": {
+    "description": "Invalid PDF error message"
+  },
+  
+  "serverError": "Server error occurred. Please try again later",
+  "@serverError": {
+    "description": "Server error message"
+  },
+  
+  "purchaseComplete": "Purchase completed successfully!",
+  "@purchaseComplete": {
+    "description": "Purchase success message"
+  },
+  
+  "purchaseFailed": "Purchase failed. Please try again",
+  "@purchaseFailed": {
+    "description": "Purchase failed message"
+  },
+  
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button text"
+  },
+  
+  "retry": "Retry",
+  "@retry": {
+    "description": "Retry button text"
+  },
+  
+  "ok": "OK",
+  "@ok": {
+    "description": "OK button text"
+  },
+  
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings title"
+  },
+  
+  "language": "Language",
+  "@language": {
+    "description": "Language setting"
+  },
+  
+  "about": "About",
+  "@about": {
+    "description": "About section"
+  },
+  
+  "version": "Version",
+  "@version": {
+    "description": "App version"
+  },
+  
+  "privacyPolicy": "Privacy Policy",
+  "@privacyPolicy": {
+    "description": "Privacy policy link"
+  },
+  
+  "termsOfService": "Terms of Service",
+  "@termsOfService": {
+    "description": "Terms of service link"
+  }
+}
