@@ -90,9 +90,9 @@ class PDFXcelApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF6366F1), // Modern indigo
+            seedColor: const Color(0xFF7C6AFF), // 아이콘의 보라색과 일치
             brightness: Brightness.light,
-            primary: const Color(0xFF6366F1),
+            primary: const Color(0xFF7C6AFF),
             secondary: const Color(0xFF8B5CF6),
             tertiary: const Color(0xFF06B6D4),
             surface: const Color(0xFFFAFAFA),
@@ -265,7 +265,7 @@ class PDFXcelApp extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: const BorderSide(
-                color: Color(0xFF6366F1),
+                color: Color(0xFF7C6AFF),
                 width: 2,
               ),
             ),
@@ -273,7 +273,7 @@ class PDFXcelApp extends StatelessWidget {
           ),
           chipTheme: ChipThemeData(
             backgroundColor: const Color(0xFFF3F4F6),
-            selectedColor: const Color(0xFF6366F1),
+            selectedColor: const Color(0xFF7C6AFF),
             disabledColor: const Color(0xFFE5E7EB),
             labelStyle: const TextStyle(
               fontSize: 14,

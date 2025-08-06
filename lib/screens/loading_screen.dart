@@ -11,7 +11,7 @@ class LoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
+      backgroundColor: const Color(0xFF7C6AFF), // 아이콘의 보라색 배경과 일치
       body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
