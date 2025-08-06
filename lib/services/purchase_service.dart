@@ -35,7 +35,6 @@ class PurchaseService {
   static const Set<String> _productIds = {
     'com.pdfxcel.mobile.Monthly',   // 월간 구독
     'com.pdfxcel.mobile.Annual',    // 연간 구독  
-    'com.pdfxcel.mobile.Lifetime',  // 평생 이용권
     'com.pdfxcel.mobile.OneTimeAI', // AI 변환 1회
   };
 
@@ -105,7 +104,7 @@ class PurchaseService {
     }
   }
 
-  // 구독 플랜 파싱
+  // 구독 플랜 파싱 (1회 변환권 제외)
   List<SubscriptionPlan> parseSubscriptionPlans(List<ProductDetails> products) {
     final plans = <SubscriptionPlan>[];
 
@@ -113,8 +112,13 @@ class PurchaseService {
       // Product ID 기반으로 플랜 식별
       final isMonthly = product.id == 'com.pdfxcel.mobile.Monthly';
       final isAnnual = product.id == 'com.pdfxcel.mobile.Annual';
-      final isLifetime = product.id == 'com.pdfxcel.mobile.Lifetime';
       final isOneTime = product.id == 'com.pdfxcel.mobile.OneTimeAI';
+      
+      // 1회 변환권은 구독 플랜에서 제외
+      if (isOneTime) {
+        debugPrint('🎯 1회 변환권 상품 발견 (구독 플랜에서 제외): ${product.id}');
+        continue;
+      }
 
       String title = '';
       String description = '';
@@ -131,16 +135,6 @@ class PurchaseService {
         description = '무제한 변환 + 광고 제거 + 60% 할인';
         period = '년';
         isPopular = true; // 가장 인기 있는 플랜
-      } else if (isLifetime) {
-        title = 'PRO 평생 이용권';
-        description = '한번 구매로 평생 무제한 이용';
-        period = '평생';
-        isPopular = false;
-      } else if (isOneTime) {
-        title = 'AI 변환 1회';
-        description = '고품질 AI 변환 1회 이용권';
-        period = '일회성';
-        isPopular = false;
       } else {
         // 알 수 없는 상품
         title = product.title;
