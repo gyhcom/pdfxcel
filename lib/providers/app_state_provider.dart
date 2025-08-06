@@ -238,9 +238,17 @@ class AppStateProvider extends ChangeNotifier {
 
   // 구독 상태 및 변환권 새로고침
   Future<void> refreshAll() async {
+    debugPrint('🔄 AppStateProvider 전체 상태 새로고침 시작...');
+    
     await purchaseService.refreshSubscriptionStatus(); // 실제 구독 상태 확인
     await _checkProStatus();
     await _loadOneTimeCredits();
+    await _resetDailyFreeConverts();
+    
+    // UI 업데이트 강제 실행
+    notifyListeners();
+    
+    debugPrint('🔄 AppStateProvider 새로고침 완료 - PRO: $_isProUser, 1회권: $_oneTimeCredits, 무료: $_freeAiConvertsLeft');
   }
 
   // 구매 스트림 리스너 설정 (샌드박스 테스트 필수)
