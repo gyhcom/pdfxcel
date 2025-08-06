@@ -23,14 +23,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _isOnline = true;
-  
+
   @override
   void initState() {
     super.initState();
 
     _checkNetworkStatus();
   }
-  
+
   Future<void> _checkNetworkStatus() async {
     final isOnline = await NetworkChecker.hasConnection();
     if (mounted) {
@@ -39,61 +39,16 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: Colors.white,
         elevation: 0,
         title: Row(
           children: [
-            // 앱 아이콘
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    offset: const Offset(0, 2),
-                    blurRadius: 8,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  'assets/icon.png',
-                  width: 32,
-                  height: 32,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    // 앱 아이콘을 불러올 수 없는 경우 대체 아이콘 표시
-                    return Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.auto_awesome_rounded,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
             // 타이틀과 슬로건
             Expanded(
               child: Column(
@@ -101,21 +56,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'PDFXcel',
+                    'PDF 변환',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: const Color(0xFF1F2937),
                       fontWeight: FontWeight.bold,
                       height: 1.1,
                       letterSpacing: -0.5,
-                    ),
-                  ),
-                  Text(
-                    'AI PDF to Excel',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF6B7280),
-                      fontSize: 11,
-                      height: 1.0,
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -200,8 +146,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       style: FilledButton.styleFrom(
-                        backgroundColor: appState.isProUser 
-                          ? const Color(0xFFEAB308) 
+                        backgroundColor: appState.isProUser
+                          ? const Color(0xFFEAB308)
                           : const Color(0xFF3B82F6),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -223,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               // 오프라인 상태 배너
               if (!_isOnline) NetworkChecker.buildOfflineBanner(),
-              
+
               // 메인 컨텐츠
               Expanded(
                 child: SingleChildScrollView(
@@ -232,19 +178,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 20),
-                      
+
                       // 메인 타이틀
                       _buildMainTitle(),
                       const SizedBox(height: 24),
-                      
+
                       // 변환권 상태 카드
                       _buildCreditsStatusCard(appState),
                       const SizedBox(height: 24),
-                      
+
                       // 기능 그리드
                       _buildFunctionGrid(appState),
                       const SizedBox(height: 40),
-                      
+
                       // 빠른 액세스 섹션 (PRO 배너 포함)
                       _buildQuickAccessSection(),
                       const SizedBox(height: 100), // 하단 광고를 위한 여백
@@ -252,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
-              
+
               // 하단 배너 광고 (PRO가 아닌 경우에만 표시)
               if (!appState.isProUser) const BottomBannerAd(),
             ],
@@ -267,20 +213,11 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'PDF 변환',
-          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-            color: const Color(0xFF1F2937),
-            fontWeight: FontWeight.bold,
-            fontSize: 32,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          _isOnline 
+          _isOnline
             ? 'AI 기술로 PDF를 Excel로 빠르게 변환하세요'
             : '히스토리와 설정을 확인할 수 있습니다',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: _isOnline 
+            color: _isOnline
               ? const Color(0xFF6B7280)
               : Colors.orange.shade700,
             fontSize: 16,
@@ -312,8 +249,8 @@ class _HomeScreenState extends State<HomeScreen> {
             title: 'AI PDF → Excel 변환',
             subtitle: !_isOnline
               ? '인터넷 연결이 필요합니다'
-              : appState.isProUser 
-                ? '무제한 고품질 AI 변환' 
+              : appState.isProUser
+                ? '무제한 고품질 AI 변환'
                 : appState.freeAiConvertsLeft > 0
                   ? '${appState.freeAiConvertsLeft}회 무료 변환 가능'
                   : 'PRO 구독으로 무제한 변환',
@@ -326,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen> {
             isLimited: !_isOnline || (appState.freeAiConvertsLeft == 0 && !appState.isProUser),
           ),
           const SizedBox(height: 20),
-          
+
           // 서브 기능들
           Row(
             children: [
@@ -405,8 +342,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: isLimited 
-                                ? const Color(0xFF9CA3AF) 
+                              color: isLimited
+                                ? const Color(0xFF9CA3AF)
                                 : const Color(0xFF1F2937),
                             ),
                           ),
@@ -434,8 +371,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       subtitle,
                       style: TextStyle(
                         fontSize: 14,
-                        color: isLimited 
-                          ? const Color(0xFF9CA3AF) 
+                        color: isLimited
+                          ? const Color(0xFF9CA3AF)
                           : const Color(0xFF6B7280),
                       ),
                     ),
@@ -503,8 +440,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // PRO 유도 (무료 사용자가 변환 횟수를 모두 사용한 경우에만 표시)
-            if (!appState.isProUser && appState.freeAiConvertsLeft == 0) ...[
+            // PRO 유도 및 1회 변환권 옵션 (무료 사용자가 변환 횟수를 모두 사용한 경우에만 표시)
+            if (!appState.isProUser && appState.freeAiConvertsLeft == 0 && appState.oneTimeCredits == 0) ...[
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -516,46 +453,64 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 1,
                   ),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color: const Color(0xFFEAB308),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        '무료 변환을 모두 사용했습니다. PRO로 업그레이드하여 무제한 이용하세요.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: const Color(0xFF1F2937),
-                          fontWeight: FontWeight.w500,
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline_rounded,
+                          color: const Color(0xFFEAB308),
+                          size: 20,
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton(
-                      onPressed: () => _navigateToSubscription(context),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFEAB308)),
-                        foregroundColor: const Color(0xFFEAB308),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        minimumSize: Size.zero,
-                      ),
-                      child: const Text(
-                        'PRO',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            '무료 변환을 모두 사용했습니다.',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: const Color(0xFF1F2937),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _showOneTimePurchaseDialog,
+                            icon: const Icon(Icons.payment_rounded, size: 16),
+                            label: const Text('1회 변환권'),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF8B5CF6)),
+                              foregroundColor: const Color(0xFF8B5CF6),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _navigateToSubscription(context),
+                            icon: const Icon(Icons.diamond, size: 16),
+                            label: const Text('PRO 구독'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFEAB308),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
             ],
-            
+
 
             const SizedBox(height: 16),
             Container(
@@ -650,7 +605,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!hasConnection) {
       return;
     }
-    
+
     // 변환 가능 여부 확인
     if (!appState.canConvert()) {
       _showConvertLimitDialog();
@@ -661,9 +616,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // 파일 업로드 다이얼로그 표시 및 검증
       if (!mounted) return;
       final file = await FileUploadDialog.showUploadDialog(context);
-      
+
       if (!mounted) return;
-      
+
       if (file == null || file.path == null) {
         return; // 사용자가 취소했거나 파일이 유효하지 않음
       }
@@ -726,7 +681,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
       }
-      
+
       if (mounted) {
         _showErrorDialog(context, error.toString());
       }
@@ -736,7 +691,7 @@ class _HomeScreenState extends State<HomeScreen> {
   // 1회 변환권 구매 다이얼로그
   void _showOneTimePurchaseDialog() {
     final appState = Provider.of<AppStateProvider>(context, listen: false);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -872,9 +827,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _showLoadingSnackBar('구매 처리 중...');
 
       final result = await purchaseService.purchaseProduct(oneTimeProduct);
-      
+
       if (!mounted) return;
-      
+
       if (result['success']) {
         _showSuccessSnackBar('1회 변환권 구매가 완료되었습니다!');
         // 상태 새로고침
@@ -946,6 +901,10 @@ class _HomeScreenState extends State<HomeScreen> {
   // 변환권 상태 카드
   Widget _buildCreditsStatusCard(AppStateProvider appState) {
     final method = appState.getConversionMethod();
+    debugPrint('🎯 변환 방법: $method');
+    debugPrint('🎯 PRO 상태: ${appState.isProUser}');
+    debugPrint('🎯 무료 변환: ${appState.freeAiConvertsLeft}');
+    debugPrint('🎯 1회 변환권: ${appState.oneTimeCredits}');
     Color cardColor;
     IconData icon;
     String title;
@@ -976,13 +935,29 @@ class _HomeScreenState extends State<HomeScreen> {
         icon = Icons.lock_rounded;
         title = '변환권 없음';
         subtitle = '새로운 변환권을 구매하세요';
-        actionButton = TextButton(
-          onPressed: _showOneTimePurchaseDialog,
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          ),
-          child: const Text('구매하기'),
+        actionButton = Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextButton(
+              onPressed: () => _navigateToSubscription(context),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              ),
+              child: const Text('PRO', style: TextStyle(fontSize: 12)),
+            ),
+            const SizedBox(width: 4),
+            ElevatedButton(
+              onPressed: _showOneTimePurchaseDialog,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: cardColor,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                minimumSize: Size.zero,
+              ),
+              child: const Text('1회권', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            ),
+          ],
         );
         break;
     }
@@ -1118,7 +1093,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showErrorDialog(BuildContext context, String error) {
     String userFriendlyMessage;
     bool showRetry = true;
-    
+
     // 에러 메시지를 사용자 친화적으로 변환
     if (error.contains('network') || error.contains('connection')) {
       userFriendlyMessage = '인터넷 연결을 확인해주세요.\n네트워크가 불안정하거나 연결이 끊어졌습니다.';
@@ -1135,7 +1110,7 @@ class _HomeScreenState extends State<HomeScreen> {
         userFriendlyMessage = '파일 접근 권한이 없습니다.\n설정에서 권한을 확인해주세요.';
       }
     }
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
