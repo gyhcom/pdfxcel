@@ -48,6 +48,61 @@
   "@oneTimeCredit": {
     "description": "One-time conversion credit"
   },
+
+  "contact": "Contact",
+  "@contact": {
+    "description": "Contact title"
+  },
+
+  "contactUs": "Contact Us",
+  "@contactUs": {
+    "description": "Contact us button text"
+  },
+
+  "contactCategory": "Inquiry Category",
+  "@contactCategory": {
+    "description": "Contact category label"
+  },
+
+  "contactSubject": "Subject",
+  "@contactSubject": {
+    "description": "Contact subject label"
+  },
+
+  "contactMessage": "Message",
+  "@contactMessage": {
+    "description": "Contact message label"
+  },
+
+  "contactSubjectHint": "Please enter your inquiry subject",
+  "@contactSubjectHint": {
+    "description": "Contact subject hint text"
+  },
+
+  "contactMessageHint": "Please describe your inquiry in detail.\n\nExample:\n- What problem occurred\n- In what situation did it occur\n- Expected result vs actual result\n- Error message (if any)",
+  "@contactMessageHint": {
+    "description": "Contact message hint text"
+  },
+
+  "sendInquiry": "Send Inquiry",
+  "@sendInquiry": {
+    "description": "Send inquiry button text"
+  },
+
+  "sending": "Sending...",
+  "@sending": {
+    "description": "Sending status text"
+  },
+
+  "contactNotice": "Inquiry Guidelines",
+  "@contactNotice": {
+    "description": "Contact notice title"
+  },
+
+  "contactNoticeText": "• We typically respond within 24 hours\n• System information is automatically included for faster resolution\n• You can also email us directly at gyeonho@gmail.com",
+  "@contactNoticeText": {
+    "description": "Contact notice content"
+  },
   
   "unlimitedConversions": "Unlimited conversions + Ad removal",
   "@unlimitedConversions": {
@@ -257,5 +312,230 @@
   "termsOfService": "Terms of Service",
   "@termsOfService": {
     "description": "Terms of service link"
+  },
+
+  "aiPdfToExcelConversion": "AI PDF → Excel Conversion",
+  "@aiPdfToExcelConversion": {
+    "description": "Main conversion feature title"
+  },
+
+  "fastConversionWithAi": "Convert PDF to Excel quickly with AI technology",
+  "@fastConversionWithAi": {
+    "description": "Main subtitle when online"
+  },
+
+  "viewHistoryAndSettings": "View history and settings available",
+  "@viewHistoryAndSettings": {
+    "description": "Main subtitle when offline"
+  },
+
+  "conversionHistory": "Conversion History",
+  "@conversionHistory": {
+    "description": "History button text"
+  },
+
+  "usageGuide": "Usage Guide",
+  "@usageGuide": {
+    "description": "Help/guide button text"
+  },
+
+  "unlimitedHighQualityAi": "Unlimited high-quality AI conversion",
+  "@unlimitedHighQualityAi": {
+    "description": "PRO subscription benefit subtitle"
+  },
+
+  "freeConvertsLeft": "{count} free conversions available",
+  "@freeConvertsLeft": {
+    "description": "Free conversions remaining",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "freeAiConversionsToday": "Free AI conversions available today",
+  "@freeAiConversionsToday": {
+    "description": "Free conversion subtitle"
+  },
+
+  "proForUnlimitedConversions": "PRO subscription for unlimited conversions",
+  "@proForUnlimitedConversions": {
+    "description": "Subtitle when free conversions exhausted"
+  },
+
+  "oneTimeCreditsCount": "{count} credits available",
+  "@oneTimeCreditsCount": {
+    "description": "One-time credits available",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "purchasedOneTimeCreditsForAi": "Use purchased one-time credits for AI conversion",
+  "@purchasedOneTimeCreditsForAi": {
+    "description": "One-time credit subtitle"
+  },
+
+  "noCreditsAvailable": "No credits available",
+  "@noCreditsAvailable": {
+    "description": "No conversion credits title"
+  },
+
+  "purchaseNewCredits": "Purchase new conversion credits",
+  "@purchaseNewCredits": {
+    "description": "Purchase new credits subtitle"
+  },
+
+  "proMembershipActive": "PRO Membership Active",
+  "@proMembershipActive": {
+    "description": "PRO user status"
+  },
+
+  "freePlan": "Free Plan",
+  "@freePlan": {
+    "description": "Free user status"
+  },
+
+  "usedAllFreeConversions": "You have used all free conversions.",
+  "@usedAllFreeConversions": {
+    "description": "Free conversions exhausted message"
+  },
+
+  "purchaseOneTimeCreditsShort": "1-Time Credit",
+  "@purchaseOneTimeCreditsShort": {
+    "description": "Short one-time credit button text"
+  },
+
+  "proSubscriptionShort": "PRO Subscription",
+  "@proSubscriptionShort": {
+    "description": "Short PRO subscription button text"
+  },
+
+  "purchaseOneTimeCreditTitle": "Purchase 1-Time Credit",
+  "@purchaseOneTimeCreditTitle": {
+    "description": "One-time credit purchase dialog title"
+  },
+
+  "highQualityOneTimeDescription": "High-quality AI conversion for 1 use.",
+  "@highQualityOneTimeDescription": {
+    "description": "One-time credit description"
+  },
+
+  "aiConversionOneTime": "AI conversion 1 time",
+  "@aiConversionOneTime": {
+    "description": "One-time credit feature 1"
+  },
+
+  "permanentStorageNoExpiry": "Permanent storage (no expiration)",
+  "@permanentStorageNoExpiry": {
+    "description": "One-time credit feature 2"
+  },
+
+  "adFreeHighQualityConversion": "Ad-free high-quality conversion",
+  "@adFreeHighQualityConversion": {
+    "description": "One-time credit feature 3"
+  },
+
+  "currentlyOwned": "Currently owned: {count}",
+  "@currentlyOwned": {
+    "description": "Current credits owned",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+
+  "purchaseNow": "Purchase Now",
+  "@purchaseNow": {
+    "description": "Purchase button text"
+  },
+
+  "aiConversionLimit": "AI Conversion Limit",
+  "@aiConversionLimit": {
+    "description": "Conversion limit dialog title"
+  },
+
+  "noAiConversionsAvailable": "No AI conversions available.\n\n• PRO Subscription: Unlimited AI conversions\n• 1-Time Credit: 1 AI conversion (individual purchase)\n• Free: 1 more tomorrow",
+  "@noAiConversionsAvailable": {
+    "description": "Conversion limit dialog content"
+  },
+
+  "later": "Later",
+  "@later": {
+    "description": "Later button text"
+  },
+
+  "conversionFailed": "Conversion Failed",
+  "@conversionFailed": {
+    "description": "Error dialog title"
+  },
+
+  "checkInternetConnection": "Please check your internet connection.\nNetwork is unstable or disconnected.",
+  "@checkInternetConnection": {
+    "description": "Network error message"
+  },
+
+  "requestTimeout": "Request timed out.\nFile may be large or server may be busy.",
+  "@requestTimeout": {
+    "description": "Timeout error message"
+  },
+
+  "fileUploadFailed": "File upload failed.\nTry selecting a different file or retry.",
+  "@fileUploadFailed": {
+    "description": "File upload error message"
+  },
+
+  "serverTemporaryIssue": "Server has a temporary issue.\nPlease try again later.",
+  "@serverTemporaryIssue": {
+    "description": "Server error message"
+  },
+
+  "conversionError": "An error occurred during conversion.\nPlease try again.",
+  "@conversionError": {
+    "description": "General conversion error"
+  },
+
+  "fileAccessPermission": "No file access permission.\nPlease check permissions in settings.",
+  "@fileAccessPermission": {
+    "description": "Permission error message"
+  },
+
+  "contactSupport": "If the problem persists, use Settings > Contact Support",
+  "@contactSupport": {
+    "description": "Support contact message"
+  },
+
+  "tryAgain": "Try Again",
+  "@tryAgain": {
+    "description": "Try again button text"
+  },
+
+  "usageGuideTitle": "Usage Guide",
+  "@usageGuideTitle": {
+    "description": "Help dialog title"
+  },
+
+  "guideStep1": "1. Select or capture PDF file",
+  "@guideStep1": {
+    "description": "Guide step 1"
+  },
+
+  "guideStep2": "2. Choose AI conversion option (high quality)",
+  "@guideStep2": {
+    "description": "Guide step 2"
+  },
+
+  "guideStep3": "3. Download Excel after conversion",
+  "@guideStep3": {
+    "description": "Guide step 3"
+  },
+
+  "guideStep4": "4. Manage previous files in history",
+  "@guideStep4": {
+    "description": "Guide step 4"
   }
 }

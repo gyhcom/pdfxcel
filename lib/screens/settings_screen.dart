@@ -7,6 +7,7 @@ import '../widgets/language_selector.dart';
 import 'privacy_policy_screen.dart';
 import 'terms_of_service_screen.dart';
 import 'subscription_screen.dart';
+import 'contact_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -101,12 +102,19 @@ class SettingsScreen extends StatelessWidget {
             
             const SizedBox(height: 20),
             
-            // 앱 정보
+            // 언어 및 앱 설정
             _buildSection([
               _buildSettingItem(
+                icon: Icons.language_rounded,
+                title: l10n.language,
+                subtitle: languageProvider.currentLanguageDisplayName,
+                trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                onTap: () => _showLanguageSelector(context),
+              ),
+              _buildSettingItem(
                 icon: Icons.info_outline_rounded,
-                title: '앱 정보',
-                subtitle: 'PDFXcel v1.0.0',
+                title: l10n.about,
+                subtitle: '${l10n.version} 1.0.0',
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                 onTap: () => _showAppInfoDialog(context),
               ),
@@ -135,7 +143,12 @@ class SettingsScreen extends StatelessWidget {
                 title: '문의하기',
                 subtitle: '개발팀에 문의',
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                onTap: () => _showContactDialog(context),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ContactScreen(),
+                  ),
+                ),
               ),
             ]),
             
@@ -145,7 +158,7 @@ class SettingsScreen extends StatelessWidget {
             _buildSection([
               _buildSettingItem(
                 icon: Icons.privacy_tip_outlined,
-                title: '개인정보처리방침',
+                title: l10n.privacyPolicy,
                 subtitle: '개인정보 수집 및 이용 안내',
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                 onTap: () => Navigator.push(
@@ -157,7 +170,7 @@ class SettingsScreen extends StatelessWidget {
               ),
               _buildSettingItem(
                 icon: Icons.description_outlined,
-                title: '이용약관',
+                title: l10n.termsOfService,
                 subtitle: '서비스 이용 규정',
                 trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                 onTap: () => Navigator.push(
@@ -267,6 +280,17 @@ class SettingsScreen extends StatelessWidget {
     );
   }
   
+  void _showLanguageSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => const LanguageSelector(),
+    );
+  }
+  
   void _showAppInfoDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -344,21 +368,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
   
-  void _showContactDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('문의하기'),
-        content: const Text('개발팀에 문의사항이 있으시면\n아래 이메일로 연락해주세요.\n\nsupport@pdfxcel.app'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
-  }
   
   // 구독 상태 새로고침
   Future<void> _refreshSubscriptionStatus(BuildContext context) async {
