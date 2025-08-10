@@ -1,0 +1,266 @@
+# PDFXcel 개발 스니펫 모음
+
+## 🎨 UI 패턴
+
+### Material Design 3 Card
+```dart
+Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(16),
+    boxShadow: [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.05),
+        offset: const Offset(0, 4),
+        blurRadius: 20,
+      ),
+    ],
+  ),
+  child: // Your content
+)
+```
+
+### 설정 아이템 위젯
+```dart
+Material(
+  color: Colors.transparent,
+  child: InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(16),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: const Color(0xFF3B82F6), size: 20),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2937),
+                )),
+                Text(subtitle, style: const TextStyle(
+                  fontSize: 14, color: Color(0xFF6B7280),
+                )),
+              ],
+            ),
+          ),
+          trailing,
+        ],
+      ),
+    ),
+  ),
+)
+```
+
+## 🌐 로컬라이제이션 패턴
+
+### 다국어 텍스트 처리
+```dart
+// 위젯에서 사용
+final l10n = AppLocalizations.of(context)!;
+
+// 조건부 텍스트
+Text(
+  l10n.localeName == 'ko' 
+    ? '한국어 텍스트'
+    : 'English Text',
+)
+
+// ARB 파일에 추가
+// app_ko.arb
+"keyName": "한국어 값"
+
+// app_en.arb  
+"keyName": "English Value"
+```
+
+## 📡 API 호출 패턴
+
+### Dio를 사용한 파일 업로드
+```dart
+Future<Response> uploadFile(File file) async {
+  try {
+    FormData formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        file.path,
+        filename: file.path.split('/').last,
+      ),
+    });
+    
+    return await dio.post('/upload', data: formData);
+  } on DioException catch (e) {
+    throw Exception('Upload failed: ${e.message}');
+  }
+}
+```
+
+### 네트워크 상태 확인
+```dart
+Future<bool> checkNetworkAndShowDialog(BuildContext context) async {
+  final hasConnection = await NetworkChecker.hasConnection();
+  if (!hasConnection && context.mounted) {
+    NetworkChecker.showOfflineDialog(context);
+  }
+  return hasConnection;
+}
+```
+
+## 💰 인앱 결제 패턴
+
+### 구매 처리
+```dart
+Future<bool> purchaseProduct(String productId) async {
+  try {
+    final ProductDetails product = await _getProduct(productId);
+    final PurchaseParam purchaseParam = PurchaseParam(
+      productDetails: product,
+    );
+    
+    await InAppPurchase.instance.buyNonConsumable(
+      purchaseParam: purchaseParam,
+    );
+    return true;
+  } catch (e) {
+    debugPrint('Purchase failed: $e');
+    return false;
+  }
+}
+```
+
+## 🎯 상태 관리 패턴
+
+### Provider 상태 업데이트
+```dart
+class AppStateProvider extends ChangeNotifier {
+  bool _isLoading = false;
+  
+  bool get isLoading => _isLoading;
+  
+  void setLoading(bool value) {
+    if (_isLoading != value) {
+      _isLoading = value;
+      notifyListeners();
+    }
+  }
+}
+
+// 위젯에서 사용
+Consumer<AppStateProvider>(
+  builder: (context, appState, child) {
+    if (appState.isLoading) {
+      return const CircularProgressIndicator();
+    }
+    return YourWidget();
+  },
+)
+```
+
+## 📁 파일 처리 패턴
+
+### 파일 선택 및 검증
+```dart
+Future<File?> pickPdfFile() async {
+  try {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    
+    if (result != null) {
+      File file = File(result.files.single.path!);
+      
+      // 파일 크기 확인 (50MB 제한)
+      if (await file.length() > 50 * 1024 * 1024) {
+        throw Exception('파일 크기가 50MB를 초과합니다');
+      }
+      
+      return file;
+    }
+    return null;
+  } catch (e) {
+    throw Exception('파일 선택 실패: $e');
+  }
+}
+```
+
+## 🎨 스낵바 및 다이얼로그
+
+### 스낙바 표시
+```dart
+void showSnackBar(BuildContext context, String message, {bool isError = false}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: isError ? Colors.red : Colors.green,
+      duration: const Duration(seconds: 3),
+    ),
+  );
+}
+```
+
+### 확인 다이얼로그
+```dart
+Future<bool> showConfirmDialog(BuildContext context, String message) async {
+  return await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('확인'),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('확인'),
+        ),
+      ],
+    ),
+  ) ?? false;
+}
+```
+
+## 🔧 유틸리티 함수
+
+### 안전한 setState
+```dart
+void safeSetState(VoidCallback fn) {
+  if (mounted) {
+    setState(fn);
+  }
+}
+```
+
+### 디바이스 정보 수집
+```dart
+Future<String> getDeviceInfo() async {
+  final packageInfo = await PackageInfo.fromPlatform();
+  final deviceInfo = DeviceInfoPlugin();
+  
+  String details = '''
+앱 버전: ${packageInfo.version} (${packageInfo.buildNumber})
+''';
+  
+  if (Platform.isIOS) {
+    final iosInfo = await deviceInfo.iosInfo;
+    details += '''
+기기: ${iosInfo.name}
+모델: ${iosInfo.model}
+시스템: iOS ${iosInfo.systemVersion}
+''';
+  }
+  
+  return details;
+}
+```
